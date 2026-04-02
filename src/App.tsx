@@ -2,6 +2,19 @@ import { useState, useEffect, useMemo } from 'react';
 import './App.css';
 import { AleoClient, type AleoRecord, type Account } from "./aleo";
 
+const TOKEN_PROGRAMS = {
+  'testnet': [
+    'credits.aleo',
+    'test_usad_stablecoin.aleo',
+    'test_usdcx_stablecoin.aleo',
+  ],
+  'mainnet': [
+    'credits.aloe',
+    'usad_stablecoin.aleo',
+    'usdcx_stablecoin.aleo',
+  ]
+};
+
 function App() {
   const testnetAleoClient = useMemo(() => new AleoClient('testnet', {
     apiKey: import.meta.env.VITE_PROVABLE_API_KEY,
@@ -36,6 +49,7 @@ function App() {
 
   useEffect(() => {
     setAleoClient(network === 'testnet' ? testnetAleoClient : mainnetAleoClient);
+    setProgramNameInput(TOKEN_PROGRAMS[network][0]);
     setAleoAccount(null);
     setAddress(null);
     setViewKey(null);
@@ -169,8 +183,9 @@ function App() {
               value={programNameInput}
               onChange={e => setProgramNameInput(e.target.value)}
             >
-              <option value="credits.aleo">credits.aleo</option>
-              <option value="test_usad_stablecoin.aleo">test_usad_stablecoin.aleo</option>
+              {TOKEN_PROGRAMS[network].map(p => (
+                <option key={p} value={p}>{p}</option>
+              ))}
             </select>
           </div>
           <button
