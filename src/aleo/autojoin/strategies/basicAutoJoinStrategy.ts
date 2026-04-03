@@ -1,6 +1,12 @@
 import { type JoinStrategy, AutoJoinClient } from "../";
 import type {OwnedRecord} from "@provablehq/sdk/mainnet.js";
 
+/**
+ * Simple strategy for joining records using the typical join(recordA, recordB) transition
+ * supported by credits and USDCx/USAD stablecoins. This strategy should also work for
+ * most token_registry tokens and the upcoming ARC-20s but these are not yet added to the
+ * supported programs list.
+ */
 export class BasicAutoJoinStrategy implements JoinStrategy {
   private readonly autoJoinClient: AutoJoinClient;
   private readonly supportedPrograms: string[] = [
