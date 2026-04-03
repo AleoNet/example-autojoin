@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import './App.css';
-import {AleoClient, type AleoRecord, type Account, AleoAutoJoin} from "./aleo";
+import {AleoClient, type AleoRecord, type Account} from "./aleo";
+import {AutoJoinClient} from "./aleo/autojoin/autoJoinClient.ts";
+import {BasicAutoJoinStrategy} from "./aleo/autojoin/strategies/basicAutoJoinStrategy.ts";
 
 const TOKEN_PROGRAMS = {
   'testnet': [
@@ -29,7 +31,7 @@ function App() {
 
   const [aleoClient, setAleoClient] = useState<AleoClient<'testnet' | 'mainnet'>>(testnetAleoClient);
   const [network, setNetwork] = useState<'testnet' | 'mainnet'>('testnet');
-  const [aleoAutoJoin, setAleoAutoJoin] = useState<AleoAutoJoin | undefined>();
+  const [aleoAutoJoin, setAutoJoinClient] = useState<AutoJoinClient | undefined>();
 
   const [privateKeyInput, setPrivateKeyInput] = useState(import.meta.env.VITE_DEFAULT_PKEY || '');
   const [programNameInput, setProgramNameInput] = useState('credits.aleo');
@@ -69,7 +71,7 @@ function App() {
       setAleoAccount(account);
       setAddress(account.address().to_string());
       setViewKey(account.viewKey().to_string());
-      setAleoAutoJoin(new AleoAutoJoin(aleoClient, account));
+      setAutoJoinClient(new AutoJoinClient(aleoClient, account, BasicAutoJoinStrategy));
       await aleoClient.registerAccountForRecordScanning(account);
     } catch {
       setError('Invalid private key');

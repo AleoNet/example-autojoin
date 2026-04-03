@@ -1,25 +1,15 @@
-import {
-  type Account,
-  AleoClient,
-  type AleoNetwork,
-  type OwnedRecord,
-  type ProgramManager,
-} from './aleoClient.ts';
+import { type JoinStrategy, AutoJoinClient } from "../";
+import type {OwnedRecord} from "@provablehq/sdk/mainnet.js";
 
-export class AleoAutoJoin {
-  private readonly aleoClient: AleoClient<AleoNetwork>;
-  private readonly account: Account;
-  private readonly accountAddress: string;
-  private programManager?: ProgramManager;
+export class BasicAutoJoinStrategy implements JoinStrategy {
+  private readonly autoJoinClient: AutoJoinClient;
 
-  constructor(aleoClient: AleoClient<AleoNetwork>, account: Account) {
-    this.aleoClient = aleoClient;
-    this.account = account;
-    this.accountAddress = account.address().to_string();
+  constructor(autoJoinClient: AutoJoinClient) {
+    this.autoJoinClient = autoJoinClient;
   }
 
   /** Throws if records are not appropriate for joining. */
-  static validateRecordsForJoining(records: OwnedRecord[]) {
+  validateRecordsForJoining(records: OwnedRecord[]) {
     if (records.some(r => r.program_name !== records[0].program_name)) throw new Error('All records must be same program');
     if (records[0].program_name === undefined) throw new Error('All records must have a program name');
     if (records.some(r => r.owner !== records[0].owner)) throw new Error('All records must be owned by same owner');
@@ -32,8 +22,6 @@ export class AleoAutoJoin {
   async joinRecords(records: OwnedRecord[]): Promise<OwnedRecord> {
     if (records.length === 0) throw new Error('No records found');
     if (records.length === 1) return records[0];
-    AleoAutoJoin.validateRecordsForJoining(records);
-
     const programName = records[0].program_name!;
     let current = records;
 
@@ -61,8 +49,8 @@ export class AleoAutoJoin {
       await new Promise<void>(resolve => setTimeout(resolve, RETRY_DELAY_MS * 2));
 
       for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-        const fresh = await this.aleoClient.fetchUnspentRecords(
-          this.account, [programName], this.accountAddress, false
+        const fresh = await this.autoJoinClient.aleoClient.fetchUnspentRecords(
+          this.autoJoinClient.account, [programName], this.autoJoinClient.accountAddress, false
         );
         const freshCommitments = new Set(fresh.map(r => r.ownedRecord.commitment!.trim()));
         const freshTxIds = new Set(fresh.map(r => r.ownedRecord.transaction_id!.trim()));
@@ -82,10 +70,6 @@ export class AleoAutoJoin {
       }
 
       if (!validated) {
-        console.log('consumed', consumedCommitments);
-        console.log('joinTxs', joinTxIds);
-        console.log('still present', stillPresent);
-        console.log('not found', notFound);
         throw new Error('Timed out after 30s waiting for join confirmation');
       }
     }
@@ -93,29 +77,23 @@ export class AleoAutoJoin {
     return current[0];
   }
 
-  async join2(recordA: OwnedRecord, recordB: OwnedRecord): Promise<string> {
-    console.log(`join2: ${recordA.transaction_id}/${recordB.transaction_id}`);
-    const programManager = await this.getProgramManager();
+  private async join2(recordA: OwnedRecord, recordB: OwnedRecord): Promise<string> {
+    const autoJoinClient = this.autoJoinClient!;
+    const programManager = await autoJoinClient.getProgramManager();
     const provingRequest = await programManager.provingRequest({
       programName: recordA.program_name!,
       functionName: 'join',
       priorityFee: 0,
       privateFee: false,
       inputs: [
-        this.aleoClient.decryptRecord(recordA, this.account).toString(),
-        this.aleoClient.decryptRecord(recordB, this.account).toString(),
+        autoJoinClient.aleoClient.decryptRecord(recordA, autoJoinClient.account).toString(),
+        autoJoinClient.aleoClient.decryptRecord(recordB, autoJoinClient.account).toString(),
       ],
       broadcast: true,
     });
-    const {transaction, broadcast_result} = await this.aleoClient.submitProvingRequest(provingRequest);
+    const {transaction, broadcast_result} = await autoJoinClient.aleoClient.submitProvingRequest(provingRequest);
     if (broadcast_result?.status !== "Accepted") throw new Error(`Broadcast status not accepted: ${broadcast_result}`);
     if (!transaction?.id) throw new Error(`Transaction invalid: ${transaction}`);
     return transaction.id.trim();
-  }
-
-  private async getProgramManager(): Promise<ProgramManager> {
-    if (this.programManager) return this.programManager;
-    this.programManager = await this.aleoClient.getProgramManagerForAccount(this.account);
-    return this.programManager;
   }
 }

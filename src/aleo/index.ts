@@ -5,7 +5,3 @@ export {
   type AleoApiSecrets,
   type Account,
 } from './aleoClient.ts';
-
-export {
-  AleoAutoJoin,
-} from './autojoin.ts';
