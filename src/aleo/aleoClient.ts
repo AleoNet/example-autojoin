@@ -36,6 +36,11 @@ export type AleoJwtData = {
   expiration: number
 }
 
+type CachedRecords = {
+  cachedAt: number;
+  records: AleoRecord[];
+}
+
 export class AleoClient<NetworkKey extends AleoNetwork> {
   private readonly networkKey: NetworkKey;
   private network: Networks[NetworkKey] | undefined;
@@ -45,6 +50,9 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
 
   private recordScanner?: RecordScanner;
   private recordScannerUuids: Map<string, string> = new Map();
+
+  private cacheTtlSec: number = 15;
+  private cachedRecords: Map<string, CachedRecords> = new Map();
 
   private keyProvider?: FunctionKeyProvider;
   private readonly provingNetworkClient: AleoNetworkClient;
@@ -123,10 +131,18 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
     return this.network!.RecordCiphertext.fromString(ownedRecord.record_ciphertext!).decrypt(account.viewKey());
   }
 
-  async fetchUnspentRecords(account: Account, programNames: string[], address?: string): Promise<AleoRecord[]> {
+  async fetchUnspentRecords(account: Account, programNames: string[], address?: string, useCache: boolean = true): Promise<AleoRecord[]> {
     if (!this.recordScanner) await this.setupRecordScanner();
     await this.initNetwork();
     address = address ? address : account.address().to_string();
+
+    if (useCache) {
+      const cached = this.cachedRecords.get(address);
+      if (cached && Date.now() - cached.cachedAt < this.cacheTtlSec * 1000) {
+        return cached.records;
+      }
+    }
+
     if (! this.recordScannerUuids.has(address)) await this.registerAccountForRecordScanning(account);
     const records = await this.recordScanner!.findRecords({
       uuid: this.recordScannerUuids.get(address),
@@ -134,7 +150,7 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
       filter: { programs: programNames },
     });
     console.log("fetched records", records);
-    return records.map((ownedRecord: OwnedRecord) => {
+    const aleoRecords = records.map((ownedRecord: OwnedRecord) => {
       const plainText = this.decryptRecord(ownedRecord, account);
       let amount: string = "";
       try {
@@ -153,6 +169,8 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
         tokenId: ownedRecord.program_name!,
       };
     });
+    this.cachedRecords.set(address, { cachedAt: Date.now(), records: aleoRecords });
+    return aleoRecords;
   }
 
   async submitProvingRequest(provingRequest: ProvingRequest): Promise<ProvingResponse> {

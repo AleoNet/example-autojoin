@@ -98,7 +98,8 @@ function App() {
       const recordA = records[0];
       const recordB = records[1];
       console.log("joining", recordA, recordB);
-      await aleoAutoJoin?.join2(recordA.ownedRecord, recordB.ownedRecord);
+      await aleoAutoJoin?.joinRecords(records.map(r => r.ownedRecord));
+      await handleLoadRecords();
     } finally {
       setJoinLoading(false);
     }
