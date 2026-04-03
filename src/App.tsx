@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import './App.css';
-import { AleoClient, type AleoRecord, type Account } from "./aleo";
+import {AleoClient, type AleoRecord, type Account, AleoAutoJoin} from "./aleo";
 
 const TOKEN_PROGRAMS = {
   'testnet': [
@@ -29,6 +29,7 @@ function App() {
 
   const [aleoClient, setAleoClient] = useState<AleoClient<'testnet' | 'mainnet'>>(testnetAleoClient);
   const [network, setNetwork] = useState<'testnet' | 'mainnet'>('testnet');
+  const [aleoAutoJoin, setAleoAutoJoin] = useState<AleoAutoJoin | undefined>();
 
   const [privateKeyInput, setPrivateKeyInput] = useState(import.meta.env.VITE_DEFAULT_PKEY || '');
   const [programNameInput, setProgramNameInput] = useState('credits.aleo');
@@ -41,6 +42,7 @@ function App() {
   const [aleoAccount, setAleoAccount] = useState<Account | null>(null);
   const [records, setRecords] = useState<AleoRecord[]>([]);
   const [recordsLoading, setRecordsLoading] = useState(false);
+  const [joinLoading, setJoinLoading] = useState(false);
 
   useEffect(() => {
     void testnetAleoClient.initNetwork();
@@ -67,6 +69,7 @@ function App() {
       setAleoAccount(account);
       setAddress(account.address().to_string());
       setViewKey(account.viewKey().to_string());
+      setAleoAutoJoin(new AleoAutoJoin(aleoClient, account));
       await aleoClient.registerAccountForRecordScanning(account);
     } catch {
       setError('Invalid private key');
@@ -77,6 +80,28 @@ function App() {
 
   function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text);
+  }
+
+  async function handleLoadRecords() {
+    setRecordsLoading(true);
+    try {
+      const fetched = await aleoClient.fetchUnspentRecords(aleoAccount!, [programNameInput], address!);
+      setRecords(fetched);
+    } finally {
+      setRecordsLoading(false);
+    }
+  }
+
+  async function handleJoin() {
+    setJoinLoading(true);
+    try {
+      const recordA = records[0];
+      const recordB = records[1];
+      console.log("joining", recordA, recordB);
+      await aleoAutoJoin?.join2(recordA.ownedRecord, recordB.ownedRecord);
+    } finally {
+      setJoinLoading(false);
+    }
   }
 
   const hasResults = address !== null && viewKey !== null;
@@ -192,12 +217,7 @@ function App() {
             type="button"
             className="derive-btn"
             disabled={recordsLoading}
-            onClick={() => {
-              setRecordsLoading(true);
-              void aleoClient.fetchUnspentRecords(aleoAccount!, [programNameInput], address)
-                .then(setRecords)
-                .finally(() => setRecordsLoading(false));
-            }}
+            onClick={handleLoadRecords}
           >
             {recordsLoading ? 'Loading\u2026' : 'Load Records'}
           </button>
@@ -219,9 +239,10 @@ function App() {
             <button
               type="button"
               className="derive-btn"
-              disabled={records.length < 2 || recordsLoading}
+              disabled={records.length < 2 || recordsLoading || joinLoading}
+              onClick={handleJoin}
             >
-              Join Records
+              {joinLoading ? 'Joining\u2026' : 'Join Records'}
             </button>
           )}
         </div>
