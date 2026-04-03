@@ -3,7 +3,7 @@ import type {AutoJoinClient} from "./autoJoinClient.ts";
 
 export interface JoinStrategy {
   joinRecords(records: OwnedRecord[]): Promise<OwnedRecord>;
-  validateRecordsForJoining(records: OwnedRecord[]): void;
+  isSupportedProgram(programName: string): boolean;
 }
 
 export type JoinStrategyConstructor = {

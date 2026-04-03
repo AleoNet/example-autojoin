@@ -3,20 +3,20 @@ import type {OwnedRecord} from "@provablehq/sdk/mainnet.js";
 
 export class BasicAutoJoinStrategy implements JoinStrategy {
   private readonly autoJoinClient: AutoJoinClient;
+  private readonly supportedPrograms: string[] = [
+    "credits.aleo",
+    "usdcx_stablecoin.aleo",
+    "usad_stablecoin.aleo",
+    "test_usdcx_stablecoin.aleo",
+    "test_usad_stablecoin.aleo",
+  ];
 
   constructor(autoJoinClient: AutoJoinClient) {
     this.autoJoinClient = autoJoinClient;
   }
 
-  /** Throws if records are not appropriate for joining. */
-  validateRecordsForJoining(records: OwnedRecord[]) {
-    if (records.some(r => r.program_name !== records[0].program_name)) throw new Error('All records must be same program');
-    if (records[0].program_name === undefined) throw new Error('All records must have a program name');
-    if (records.some(r => r.owner !== records[0].owner)) throw new Error('All records must be owned by same owner');
-    if (records.some(r => !r.transaction_id)) throw new Error('All records must have a transaction_id');
-    if (records.some(r => !r.commitment)) throw new Error('All records must have a commitment');
-    const commitments = records.map(r => r.commitment!);
-    if (new Set(commitments).size !== commitments.length) throw new Error('All records must have unique commitments');
+  isSupportedProgram(programName: string): boolean {
+    return this.supportedPrograms.includes(programName.trim().toLowerCase());
   }
 
   async joinRecords(records: OwnedRecord[]): Promise<OwnedRecord> {

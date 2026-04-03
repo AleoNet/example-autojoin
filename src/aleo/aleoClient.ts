@@ -158,7 +158,6 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
           amount = plainText.microcredits().toString();
         } else {
           amount = plainText.getMember('amount').toString().replace('u128', '');
-          console.log(amount);
         }
       } catch (e) {
         console.error("No amount field found for record", e);
