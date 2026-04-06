@@ -95,13 +95,11 @@ function App() {
   }
 
   async function handleJoin() {
+    if (! aleoAutoJoin) return;
     setJoinLoading(true);
     try {
-      const recordA = records[0];
-      const recordB = records[1];
-      console.log("joining", recordA, recordB);
-      await aleoAutoJoin?.joinRecords(records);
-      await handleLoadRecords(true);
+      const newRecord = await aleoAutoJoin.joinRecords(records);
+      setRecords([newRecord]);
     } finally {
       setJoinLoading(false);
     }
@@ -219,7 +217,7 @@ function App() {
           <button
             type="button"
             className="derive-btn"
-            disabled={recordsLoading}
+            disabled={recordsLoading || joinLoading}
             onClick={() => handleLoadRecords(false)}
           >
             {recordsLoading ? 'Loading\u2026' : 'Load Records'}
