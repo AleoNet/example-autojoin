@@ -84,10 +84,10 @@ function App() {
     navigator.clipboard.writeText(text);
   }
 
-  async function handleLoadRecords() {
+  async function handleLoadRecords(useCache: boolean = false) {
     setRecordsLoading(true);
     try {
-      const fetched = await aleoClient.fetchUnspentRecords(aleoAccount!, [programNameInput], address!);
+      const fetched = await aleoClient.fetchUnspentRecords(aleoAccount!, [programNameInput], address!, useCache);
       setRecords(fetched);
     } finally {
       setRecordsLoading(false);
@@ -100,8 +100,8 @@ function App() {
       const recordA = records[0];
       const recordB = records[1];
       console.log("joining", recordA, recordB);
-      await aleoAutoJoin?.joinRecords(records.map(r => r.ownedRecord));
-      await handleLoadRecords();
+      await aleoAutoJoin?.joinRecords(records);
+      await handleLoadRecords(true);
     } finally {
       setJoinLoading(false);
     }
@@ -220,7 +220,7 @@ function App() {
             type="button"
             className="derive-btn"
             disabled={recordsLoading}
-            onClick={handleLoadRecords}
+            onClick={() => handleLoadRecords(false)}
           >
             {recordsLoading ? 'Loading\u2026' : 'Load Records'}
           </button>
@@ -231,9 +231,9 @@ function App() {
                   <span className="record-label">Amount</span>
                   <span className="record-value">{(Number(record.amount) / 1e6).toFixed(6)}</span>
                   <span className="record-label">Sender</span>
-                  <span className="record-value">{record.ownedRecord.sender ?? '—'}</span>
+                  <span className="record-value">{record.sender ?? '—'}</span>
                   <span className="record-label">Tx ID</span>
-                  <span className="record-value">{record.ownedRecord.transaction_id ?? '—'}</span>
+                  <span className="record-value">{record.transactionId ?? '—'}</span>
                 </li>
               ))}
             </ul>

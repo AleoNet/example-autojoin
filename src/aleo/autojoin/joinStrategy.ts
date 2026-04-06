@@ -1,8 +1,8 @@
-import type {OwnedRecord} from "@provablehq/sdk/mainnet.js";
 import type {AutoJoinClient} from "./autoJoinClient.ts";
+import type {AleoRecord} from "../aleoClient.ts";
 
 export interface JoinStrategy {
-  joinRecords(records: OwnedRecord[]): Promise<OwnedRecord>;
+  joinRecords(records: AleoRecord[]): Promise<AleoRecord>;
   isSupportedProgram(programName: string): boolean;
 }
 

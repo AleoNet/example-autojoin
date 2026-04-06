@@ -3,6 +3,9 @@ import {
   RecordScanner as TestnetRecordScanner,
   ProgramManager as TestnetProgramManager,
   type FunctionKeyProvider as TestnetFunctionKeyProvider,
+  type RecordCiphertext as TestnetRecordCiphertext,
+  type RecordPlaintext as TestnetRecordPlaintext,
+  type Transaction as TestnetTransaction,
 } from '@provablehq/sdk/testnet.js';
 import {
   Account as MainnetAccount,
@@ -12,6 +15,9 @@ import {
   type OwnedRecord,
   type ProvingRequest,
   type ProvingResponse,
+  type RecordCiphertext as MainnetRecordCiphertext,
+  type RecordPlaintext as MainnetRecordPlaintext,
+  type Transaction as MainnetTransaction, type ConfirmedTransactionJSON,
 } from '@provablehq/sdk/mainnet.js';
 import {loadNetwork, type Networks} from "@provablehq/sdk/dynamic.js";
 import {AleoNetworkClient} from "@provablehq/sdk";
@@ -21,6 +27,9 @@ export { type OwnedRecord, type ProvingRequest, type ProvingResponse } from '@pr
 type RecordScanner = TestnetRecordScanner | MainnetRecordScanner;
 export type ProgramManager = TestnetProgramManager | MainnetProgramManager;
 type FunctionKeyProvider = TestnetFunctionKeyProvider | MainnetFunctionKeyProvider;
+export type RecordPlaintext = TestnetRecordPlaintext | MainnetRecordPlaintext;
+export type RecordCiphertext = TestnetRecordCiphertext | MainnetRecordCiphertext;
+export type Transaction = TestnetTransaction | MainnetTransaction;
 
 export type Account = TestnetAccount | MainnetAccount;
 export type AleoNetwork = keyof Networks;
@@ -41,6 +50,9 @@ type CachedRecords = {
   records: AleoRecord[];
 }
 
+/**
+ * A simple wrapper around common Provable SDK features including record scanning and delegated proving.
+ */
 export class AleoClient<NetworkKey extends AleoNetwork> {
   private readonly networkKey: NetworkKey;
   private network: Networks[NetworkKey] | undefined;
@@ -55,6 +67,7 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
   private cachedRecords: Map<string, CachedRecords> = new Map();
 
   private keyProvider?: FunctionKeyProvider;
+  private readonly networkClient: AleoNetworkClient;
   private readonly provingNetworkClient: AleoNetworkClient;
 
   async initNetwork(): Promise<Networks[NetworkKey]> {
@@ -68,14 +81,16 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
     this.apiSecrets = apiSecrets;
     this.apiRoot = apiSecrets.apiRoot ? apiSecrets.apiRoot : "https://api.provable.com";
     this.provingNetworkClient = new AleoNetworkClient(`${this.apiSecrets.apiRoot}/prove`);
+    this.networkClient = new AleoNetworkClient(`${this.apiSecrets.apiRoot}/v2`);
   }
 
+  /** Converts a private key to an `Account` object. Must call `await initNetwork()` prior to using this. */
   accountFromPrivateKey(privateKey: string): Account {
     if (this.network === undefined) throw new Error("Network must be initialized first");
     return new this.network.Account({ privateKey: privateKey });
   }
 
-  async fetchJwt(): Promise<AleoJwtData> {
+  private async fetchJwt(): Promise<AleoJwtData> {
     const jwtRes = await fetch(`${this.apiRoot}/jwts/${this.apiSecrets.consumerId}`, {
       method: "POST",
       headers: {
@@ -102,6 +117,7 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
     }
   }
 
+  /** Retrieve a `ProgramManager` with the account provided so that transactions can be generated. */
   async getProgramManagerForAccount(account: Account): Promise<ProgramManager> {
     if (!this.keyProvider) {
       const net = await this.initNetwork();
@@ -117,6 +133,7 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
     return programManager;
   }
 
+  /** Register with the record scanner the view key belonging to the account. Idempotent. */
   async registerAccountForRecordScanning(account: Account, address?: string) {
     if (!this.recordScanner) await this.setupRecordScanner();
     address = address ? address : account.address().to_string();
@@ -127,10 +144,20 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
     }
   }
 
-  decryptRecord(ownedRecord: OwnedRecord, account: Account) {
-    return this.network!.RecordCiphertext.fromString(ownedRecord.record_ciphertext!).decrypt(account.viewKey());
+  decryptRecordCiphertext(ciphertext: RecordCiphertext, account: Account): RecordPlaintext {
+    return ciphertext.decrypt(account.viewKey());
   }
 
+  /**
+   * Retrieve unspent program records belonging to the specified program name(s). Records without an amount field
+   * are skipped.
+   *
+   * @param account The account object so that the view key can be found.
+   * @param programNames The list of program names to retrieve for.
+   * @param address (optional) The address of the account, otherwise derived from the account data.
+   * @param useCache (default: true) If the records cache is hot (`cacheTtlSec`) then don't make RPC calls.
+   * @return list of `AleoRecord` which has pre-parsed amounts
+   */
   async fetchUnspentRecords(account: Account, programNames: string[], address?: string, useCache: boolean = true): Promise<AleoRecord[]> {
     if (!this.recordScanner) await this.setupRecordScanner();
     await this.initNetwork();
@@ -150,28 +177,63 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
       filter: { programs: programNames },
     });
     console.log("fetched records", records);
-    const aleoRecords = records.map((ownedRecord: OwnedRecord) => {
-      const plainText = this.decryptRecord(ownedRecord, account);
-      let amount: string = "";
-      try {
-        if (ownedRecord.program_name === 'credits.aleo') {
-          amount = plainText.microcredits().toString();
-        } else {
-          amount = plainText.getMember('amount').toString().replace('u128', '');
-        }
-      } catch (e) {
-        console.error("No amount field found for record", e);
-      }
-      return {
-        ownedRecord,
-        amount,
-        tokenId: ownedRecord.program_name!,
-      };
-    });
+    const aleoRecords = records.map(r => this.ownedRecordToAleoRecord(r, account));
     this.cachedRecords.set(address, { cachedAt: Date.now(), records: aleoRecords });
     return aleoRecords;
   }
 
+  ownedRecordToAleoRecord(ownedRecord: OwnedRecord, account: Account): AleoRecord {
+    const cipherText = this.network!.RecordCiphertext.fromString(ownedRecord.record_ciphertext!);
+    return this.recordCipherTextToAleoRecord(
+      cipherText,
+      account,
+      ownedRecord.program_name!,
+      ownedRecord.transaction_id!,
+    );
+  }
+
+  recordCipherTextStringToAleoRecord(
+    cipherText: string,
+    account: Account,
+    programName: string,
+    transactionId: string,
+  ) {
+    return this.recordCipherTextToAleoRecord(
+      this.network!.RecordCiphertext.fromString(cipherText),
+      account,
+      programName,
+      transactionId,
+    );
+  }
+
+  recordCipherTextToAleoRecord(
+    cipherText: RecordCiphertext,
+    account: Account,
+    programName: string,
+    transactionId: string,
+  ) {
+    const plainText = this.decryptRecordCiphertext(cipherText, account);
+    let amount: string = "";
+    try {
+      if (programName === 'credits.aleo') {
+        amount = plainText.microcredits().toString();
+      } else {
+        amount = plainText.getMember('amount').toString().replace('u128', '');
+      }
+    } catch (e) {
+      console.error("No amount field found for record", e);
+    }
+    return {
+      programName,
+      transactionId: transactionId.trim(),
+      cipherText,
+      plainText,
+      ownerAddress: account.address().to_string(),
+      amount,
+    };
+  }
+
+  /** Calls out to the delegated proving system to submit a request for proving. **/
   async submitProvingRequest(provingRequest: ProvingRequest): Promise<ProvingResponse> {
     return await this.provingNetworkClient.submitProvingRequest({
       provingRequest,
@@ -179,10 +241,27 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
       jwtData: this.jwtData,
     });
   }
+
+  async submitTransaction(transaction: Transaction, waitForConfirmation: boolean = false) {
+    const transactionId = await this.networkClient.submitTransaction(transaction);
+    if (waitForConfirmation) {
+      const confirmedTx = await this.waitForTransactionConfirmation(transactionId);
+      return { transactionId, confirmedTx};
+    }
+    return { transactionId, confirmedTx: null};
+  }
+
+  async waitForTransactionConfirmation(transactionId: string): Promise<ConfirmedTransactionJSON> {
+    return await this.networkClient.waitForTransactionConfirmation(transactionId);
+  }
 }
 
 export type AleoRecord = {
-  ownedRecord: OwnedRecord
-  amount: string
-  tokenId: string
+  programName: string
+  transactionId: string
+  cipherText: RecordCiphertext
+  plainText: RecordPlaintext
+  ownerAddress: string
+  sender?: string
+  amount?: string
 }
