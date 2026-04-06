@@ -68,7 +68,6 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
 
   private keyProvider?: FunctionKeyProvider;
   private readonly networkClient: AleoNetworkClient;
-  private readonly provingNetworkClient: AleoNetworkClient;
 
   async initNetwork(): Promise<Networks[NetworkKey]> {
     if (this.network) return this.network;
@@ -80,8 +79,8 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
     this.networkKey = networkKey;
     this.apiSecrets = apiSecrets;
     this.apiRoot = apiSecrets.apiRoot ? apiSecrets.apiRoot : "https://api.provable.com";
-    this.provingNetworkClient = new AleoNetworkClient(`${this.apiSecrets.apiRoot}/prove`);
     this.networkClient = new AleoNetworkClient(`${this.apiSecrets.apiRoot}/v2`);
+    this.networkClient.setProverUri(`${this.apiSecrets.apiRoot}/prove`);
   }
 
   /** Converts a private key to an `Account` object. Must call `await initNetwork()` prior to using this. */
@@ -235,7 +234,7 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
 
   /** Calls out to the delegated proving system to submit a request for proving. **/
   async submitProvingRequest(provingRequest: ProvingRequest): Promise<ProvingResponse> {
-    return await this.provingNetworkClient.submitProvingRequest({
+    return await this.networkClient.submitProvingRequest({
       provingRequest,
       dpsPrivacy: true,
       jwtData: this.jwtData,
