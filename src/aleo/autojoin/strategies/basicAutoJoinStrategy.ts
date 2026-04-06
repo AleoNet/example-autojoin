@@ -37,16 +37,16 @@ export class BasicAutoJoinStrategy implements JoinStrategy {
         pairs.push([current[i], current[i + 1]]);
       }
 
-      const joinRecords = await Promise.all(pairs.map(async ([a, b]) => {
+      const joinedRecords = await Promise.all(pairs.map(async ([a, b]) => {
         const {transactionId, newRecord} = await this.join2(a, b);
         await this.autoJoinClient.aleoClient.waitForTransactionConfirmation(transactionId);
         return newRecord;
       }));
 
       if (pairs.length * 2 < current.length) {
-        current = joinRecords.concat(current[current.length - 1]);
+        current = joinedRecords.concat(current[current.length - 1]);
       } else {
-        current = joinRecords;
+        current = joinedRecords;
       }
     }
 
@@ -54,8 +54,7 @@ export class BasicAutoJoinStrategy implements JoinStrategy {
   }
 
   private async join2(recordA: AleoRecord, recordB: AleoRecord): Promise<{transactionId: string, newRecord: AleoRecord}> {
-    const autoJoinClient = this.autoJoinClient!;
-    const programManager = await autoJoinClient.getProgramManager();
+    const programManager = await this.autoJoinClient.getProgramManager();
     const provingRequest = await programManager.provingRequest({
       programName: recordA.programName,
       functionName: 'join',
@@ -67,15 +66,15 @@ export class BasicAutoJoinStrategy implements JoinStrategy {
       ],
       broadcast: true,
     });
-    const {transaction, broadcast_result} = await autoJoinClient.aleoClient.submitProvingRequest(provingRequest);
-    if (broadcast_result?.status !== "Accepted") throw new Error(`Broadcast status not accepted: ${broadcast_result}`);
+    const {transaction, broadcast_result} = await this.autoJoinClient.aleoClient.submitProvingRequest(provingRequest);
+    if (broadcast_result?.status !== "Accepted") throw new Error(`Broadcast status not accepted: ${JSON.stringify(broadcast_result)}`);
     const transactionId = transaction?.id;
     if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
-    const firstTransition = transaction.execution?.transitions[0];
-    const firstOutput = firstTransition?.outputs![0];
-    const newRecord = autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(
-      firstOutput!.value!,
-      autoJoinClient.account,
+    const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
+    if (!firstOutput?.value) throw new Error('No output record in join transaction');
+    const newRecord = this.autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(
+      firstOutput.value,
+      this.autoJoinClient.account,
       recordA.programName,
       transaction.id.trim(),
     );

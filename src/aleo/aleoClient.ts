@@ -71,8 +71,8 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
     this.networkKey = networkKey;
     this.apiSecrets = apiSecrets;
     this.apiRoot = apiSecrets.apiRoot ? apiSecrets.apiRoot : "https://api.provable.com";
-    this.networkClient = new AleoNetworkClient(`${this.apiSecrets.apiRoot}/v2`);
-    this.networkClient.setProverUri(`${this.apiSecrets.apiRoot}/prove`);
+    this.networkClient = new AleoNetworkClient(`${this.apiRoot}/v2`);
+    this.networkClient.setProverUri(`${this.apiRoot}/prove`);
   }
 
   /** Converts a private key to an `Account` object. Must call `await initNetwork()` prior to using this. */
@@ -117,7 +117,7 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
       this.keyProvider = keyProvider;
     }
     const net = await this.initNetwork();
-    const programManager = new net.ProgramManager(`${this.apiSecrets.apiRoot}/v2`, this.keyProvider);
+    const programManager = new net.ProgramManager(`${this.apiRoot}/v2`, this.keyProvider);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     programManager.setAccount(account);
@@ -140,8 +140,7 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
   }
 
   /**
-   * Retrieve unspent program records belonging to the specified program name(s). Records without an amount field
-   * are skipped.
+   * Retrieve unspent program records belonging to the specified program name(s).
    *
    * @param account The account object so that the view key can be found.
    * @param programNames The list of program names to retrieve for.
@@ -193,7 +192,7 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
     transactionId: string,
   ) {
     const plainText = this.decryptRecordCiphertext(cipherText, account);
-    let amount: string = "";
+    let amount: string | undefined = undefined;
     try {
       if (programName === 'credits.aleo') {
         amount = plainText.microcredits().toString();
@@ -242,6 +241,5 @@ export type AleoRecord = {
   cipherText: RecordCiphertext
   plainText: RecordPlaintext
   ownerAddress: string
-  sender?: string
   amount?: string
 }

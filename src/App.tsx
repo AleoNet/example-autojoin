@@ -58,6 +58,7 @@ function App() {
     setAddress(null);
     setViewKey(null);
     setRecords([]);
+    setAutoJoinClient(undefined);
   }, [network, testnetAleoClient, mainnetAleoClient]);
 
   async function handleDerive() {
@@ -73,8 +74,10 @@ function App() {
       setViewKey(account.viewKey().to_string());
       setAutoJoinClient(new AutoJoinClient(aleoClient, account, BasicAutoJoinStrategy));
       await aleoClient.registerAccountForRecordScanning(account);
-    } catch {
-      setError('Invalid private key');
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setError(`Unable to derive private key: ${e}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -85,10 +88,15 @@ function App() {
   }
 
   async function handleLoadRecords() {
+    setError(null);
     setRecordsLoading(true);
     try {
       const fetched = await aleoClient.fetchUnspentRecords(aleoAccount!, [programNameInput], address!);
       setRecords(fetched);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setError(`Unable to load records: ${e}`);
+      }
     } finally {
       setRecordsLoading(false);
     }
@@ -96,10 +104,15 @@ function App() {
 
   async function handleJoin() {
     if (! aleoAutoJoin) return;
+    setError(null);
     setJoinLoading(true);
     try {
       const newRecord = await aleoAutoJoin.joinRecords(records);
       setRecords([newRecord]);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setError(`Join operation failed: ${e}`);
+      }
     } finally {
       setJoinLoading(false);
     }
@@ -227,11 +240,11 @@ function App() {
               {records.map((record, i) => (
                 <li key={i} className="record-item">
                   <span className="record-label">Amount</span>
-                  <span className="record-value">{(Number(record.amount) / 1e6).toFixed(6)}</span>
-                  <span className="record-label">Sender</span>
-                  <span className="record-value">{record.sender ?? '—'}</span>
+                  <span className="record-value">
+                    {record.amount === undefined ? "-" : (Number(record.amount) / 1e6).toFixed(6)}
+                  </span>
                   <span className="record-label">Tx ID</span>
-                  <span className="record-value">{record.transactionId ?? '—'}</span>
+                  <span className="record-value">{record.transactionId}</span>
                 </li>
               ))}
             </ul>

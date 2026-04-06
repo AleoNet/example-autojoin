@@ -24,7 +24,6 @@ export class AutoJoinClient {
   /** Throws if records are not appropriate for joining. */
   private static validateRecordsForJoining(records: AleoRecord[], joinStrategy: JoinStrategy) {
     if (records.some(r => r.programName !== records[0].programName)) throw new Error('All records must be same program');
-    if (records[0].programName === undefined) throw new Error('All records must have a program name');
     if (! joinStrategy.isSupportedProgram(records[0].programName)) throw new Error('Unsupported program record');
     if (records.some(r => r.ownerAddress !== records[0].ownerAddress)) throw new Error('All records must be owned by same owner');
     if (records.some(r => !r.transactionId)) throw new Error('All records must have a transaction_id');
