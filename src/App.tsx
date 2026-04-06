@@ -84,10 +84,10 @@ function App() {
     navigator.clipboard.writeText(text);
   }
 
-  async function handleLoadRecords(useCache: boolean = false) {
+  async function handleLoadRecords() {
     setRecordsLoading(true);
     try {
-      const fetched = await aleoClient.fetchUnspentRecords(aleoAccount!, [programNameInput], address!, useCache);
+      const fetched = await aleoClient.fetchUnspentRecords(aleoAccount!, [programNameInput], address!);
       setRecords(fetched);
     } finally {
       setRecordsLoading(false);
@@ -218,7 +218,7 @@ function App() {
             type="button"
             className="derive-btn"
             disabled={recordsLoading || joinLoading}
-            onClick={() => handleLoadRecords(false)}
+            onClick={handleLoadRecords}
           >
             {recordsLoading ? 'Loading\u2026' : 'Load Records'}
           </button>

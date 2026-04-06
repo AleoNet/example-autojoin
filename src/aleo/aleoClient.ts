@@ -45,11 +45,6 @@ export type AleoJwtData = {
   expiration: number
 }
 
-type CachedRecords = {
-  cachedAt: number;
-  records: AleoRecord[];
-}
-
 /**
  * A simple wrapper around common Provable SDK features including record scanning and delegated proving.
  */
@@ -62,9 +57,6 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
 
   private recordScanner?: RecordScanner;
   private recordScannerUuids: Map<string, string> = new Map();
-
-  private cacheTtlSec: number = 15;
-  private cachedRecords: Map<string, CachedRecords> = new Map();
 
   private keyProvider?: FunctionKeyProvider;
   private readonly networkClient: AleoNetworkClient;
@@ -154,20 +146,12 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
    * @param account The account object so that the view key can be found.
    * @param programNames The list of program names to retrieve for.
    * @param address (optional) The address of the account, otherwise derived from the account data.
-   * @param useCache (default: true) If the records cache is hot (`cacheTtlSec`) then don't make RPC calls.
    * @return list of `AleoRecord` which has pre-parsed amounts
    */
-  async fetchUnspentRecords(account: Account, programNames: string[], address?: string, useCache: boolean = true): Promise<AleoRecord[]> {
+  async fetchUnspentRecords(account: Account, programNames: string[], address?: string): Promise<AleoRecord[]> {
     if (!this.recordScanner) await this.setupRecordScanner();
     await this.initNetwork();
     address = address ? address : account.address().to_string();
-
-    if (useCache) {
-      const cached = this.cachedRecords.get(address);
-      if (cached && Date.now() - cached.cachedAt < this.cacheTtlSec * 1000) {
-        return cached.records;
-      }
-    }
 
     if (! this.recordScannerUuids.has(address)) await this.registerAccountForRecordScanning(account);
     const records = await this.recordScanner!.findRecords({
@@ -175,10 +159,7 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
       unspent: true,
       filter: { programs: programNames },
     });
-    console.log("fetched records", records);
-    const aleoRecords = records.map(r => this.ownedRecordToAleoRecord(r, account));
-    this.cachedRecords.set(address, { cachedAt: Date.now(), records: aleoRecords });
-    return aleoRecords;
+    return records.map(r => this.ownedRecordToAleoRecord(r, account));
   }
 
   ownedRecordToAleoRecord(ownedRecord: OwnedRecord, account: Account): AleoRecord {
