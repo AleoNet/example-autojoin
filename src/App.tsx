@@ -11,7 +11,7 @@ const TOKEN_PROGRAMS = {
     'test_usdcx_stablecoin.aleo',
   ],
   'mainnet': [
-    'credits.aloe',
+    'credits.aleo',
     'usad_stablecoin.aleo',
     'usdcx_stablecoin.aleo',
   ]
