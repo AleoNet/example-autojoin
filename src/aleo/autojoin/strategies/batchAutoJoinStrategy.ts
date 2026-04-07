@@ -6,7 +6,7 @@ import type {AleoRecord} from "../../aleoClient.ts";
  * supported by custom wrapper programs for Aleo Credits and USDCx/USAD stablecoins. This strategy should also work for
  * most token_registry tokens and the upcoming ARC-20s but these are not yet added to the supported programs list.
  */
-export class BasicAutoJoinStrategy implements JoinStrategy {
+export class BatchAutoJoinStrategy implements JoinStrategy {
   private readonly autoJoinClient: AutoJoinClient;
   private readonly supportedPrograms: string[] = [
     "credits.aleo",

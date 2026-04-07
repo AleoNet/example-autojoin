@@ -3,6 +3,7 @@ import './App.css';
 import {AleoClient, type AleoRecord, type Account} from "./aleo";
 import {AutoJoinClient} from "./aleo/autojoin/autoJoinClient.ts";
 import {BasicAutoJoinStrategy} from "./aleo/autojoin/strategies/basicAutoJoinStrategy.ts";
+import {BatchAutoJoinStrategy} from "./aleo/autojoin/strategies/batchAutoJoinStrategy.ts";
 
 const TOKEN_PROGRAMS = {
   'testnet': [
