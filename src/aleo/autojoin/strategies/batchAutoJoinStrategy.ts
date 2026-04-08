@@ -204,7 +204,7 @@ private async join2(
     const transactionId = transaction?.id;
     if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
 
-    const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
+    const firstOutput = transaction.execution?.transitions?.[1]?.outputs?.[0];
     if (!firstOutput?.value) throw new Error('No output record in join transaction');
 
     const newRecord = this.autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(
@@ -242,7 +242,7 @@ private async join2(
     const transactionId = transaction?.id;
     if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
 
-    const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
+    const firstOutput = transaction.execution?.transitions?.[2]?.outputs?.[0];
     if (!firstOutput?.value) throw new Error('No output record in join transaction');
 
     const newRecord = this.autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(
@@ -282,7 +282,7 @@ private async join2(
     const transactionId = transaction?.id;
     if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
 
-    const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
+    const firstOutput = transaction.execution?.transitions?.[3]?.outputs?.[0];
     if (!firstOutput?.value) throw new Error('No output record in join transaction');
 
     const newRecord = this.autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(
@@ -324,7 +324,7 @@ private async join2(
     const transactionId = transaction?.id;
     if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
 
-    const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
+    const firstOutput = transaction.execution?.transitions?.[4]?.outputs?.[0];
     if (!firstOutput?.value) throw new Error('No output record in join transaction');
 
     const newRecord = this.autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(
@@ -368,7 +368,7 @@ private async join2(
     const transactionId = transaction?.id;
     if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
 
-    const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
+    const firstOutput = transaction.execution?.transitions?.[5]?.outputs?.[0];
     if (!firstOutput?.value) throw new Error('No output record in join transaction');
 
     const newRecord = this.autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(
@@ -414,7 +414,7 @@ private async join2(
     const transactionId = transaction?.id;
     if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
 
-    const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
+    const firstOutput = transaction.execution?.transitions?.[6]?.outputs?.[0];
     if (!firstOutput?.value) throw new Error('No output record in join transaction');
 
     const newRecord = this.autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(
@@ -462,7 +462,7 @@ private async join2(
     const transactionId = transaction?.id;
     if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
 
-    const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
+    const firstOutput = transaction.execution?.transitions?.[7]?.outputs?.[0];
     if (!firstOutput?.value) throw new Error('No output record in join transaction');
 
     const newRecord = this.autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(
@@ -512,7 +512,7 @@ private async join2(
     const transactionId = transaction?.id;
     if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
 
-    const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
+    const firstOutput = transaction.execution?.transitions?.[8]?.outputs?.[0];
     if (!firstOutput?.value) throw new Error('No output record in join transaction');
 
     const newRecord = this.autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(
@@ -564,7 +564,7 @@ private async join2(
     const transactionId = transaction?.id;
     if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
 
-    const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
+    const firstOutput = transaction.execution?.transitions?.[9]?.outputs?.[0];
     if (!firstOutput?.value) throw new Error('No output record in join transaction');
 
     const newRecord = this.autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(
@@ -618,7 +618,7 @@ private async join2(
     const transactionId = transaction?.id;
     if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
 
-    const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
+    const firstOutput = transaction.execution?.transitions?.[10]?.outputs?.[0];
     if (!firstOutput?.value) throw new Error('No output record in join transaction');
 
     const newRecord = this.autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(
@@ -674,7 +674,7 @@ private async join2(
     const transactionId = transaction?.id;
     if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
 
-    const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
+    const firstOutput = transaction.execution?.transitions?.[11]?.outputs?.[0];
     if (!firstOutput?.value) throw new Error('No output record in join transaction');
 
     const newRecord = this.autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(
@@ -732,7 +732,7 @@ private async join2(
     const transactionId = transaction?.id;
     if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
 
-    const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
+    const firstOutput = transaction.execution?.transitions?.[12]?.outputs?.[0];
     if (!firstOutput?.value) throw new Error('No output record in join transaction');
 
     const newRecord = this.autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(
@@ -792,7 +792,7 @@ private async join2(
     const transactionId = transaction?.id;
     if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
 
-    const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
+    const firstOutput = transaction.execution?.transitions?.[13]?.outputs?.[0];
     if (!firstOutput?.value) throw new Error('No output record in join transaction');
 
     const newRecord = this.autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(
@@ -854,7 +854,7 @@ private async join2(
     const transactionId = transaction?.id;
     if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
 
-    const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
+    const firstOutput = transaction.execution?.transitions?.[14]?.outputs?.[0];
     if (!firstOutput?.value) throw new Error('No output record in join transaction');
 
     const newRecord = this.autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(

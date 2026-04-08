@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import './App.css';
 import {AleoClient, type AleoRecord, type Account} from "./aleo";
 import {AutoJoinClient} from "./aleo/autojoin/autoJoinClient.ts";
+import type {JoinStrategyConstructor} from "./aleo/autojoin/joinStrategy.ts";
 import {BasicAutoJoinStrategy} from "./aleo/autojoin/strategies/basicAutoJoinStrategy.ts";
 import {BatchAutoJoinStrategy} from "./aleo/autojoin/strategies/batchAutoJoinStrategy.ts";
 
@@ -18,6 +19,8 @@ const TOKEN_PROGRAMS = {
   ]
 };
 
+type joinStrategy = "basic" | "batch"; 
+
 function App() {
   const testnetAleoClient = useMemo(() => new AleoClient('testnet', {
     apiKey: import.meta.env.VITE_PROVABLE_API_KEY,
@@ -32,6 +35,7 @@ function App() {
 
   const [aleoClient, setAleoClient] = useState<AleoClient<'testnet' | 'mainnet'>>(testnetAleoClient);
   const [network, setNetwork] = useState<'testnet' | 'mainnet'>('testnet');
+  const [joinStrategy, setJoinStrategy] = useState<joinStrategy>("basic");
   const [aleoAutoJoin, setAutoJoinClient] = useState<AutoJoinClient | undefined>();
 
   const [privateKeyInput, setPrivateKeyInput] = useState(import.meta.env.VITE_DEFAULT_PKEY || '');
@@ -62,7 +66,8 @@ function App() {
     setAutoJoinClient(undefined);
   }, [network, testnetAleoClient, mainnetAleoClient]);
 
-  async function handleDerive() {
+
+  async function handleDerive(strategy: joinStrategy) {
     setLoading(true);
     setError(null);
     setAddress(null);
@@ -87,7 +92,7 @@ function App() {
   function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text);
   }
-
+  
   async function handleLoadRecords() {
     setError(null);
     setRecordsLoading(true);
@@ -139,8 +144,30 @@ function App() {
           Mainnet
         </button>
       </div>
+      <div/>
+      <div className="network-toggle">
+        <button
+          type="button"
+          className={`network-btn${joinStrategy === "basic" ? ' network-btn--active' : ''}`}
+          onClick={() => {
+            setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, BasicAutoJoinStrategy));
+            setJoinStrategy("basic");
+          }}
+        >
+          Basic
+        </button>
+        <button
+          type="button"
+          className={`network-btn${joinStrategy === "batch" ? ' network-btn--active' : ''}`}
+          onClick={() => {
+            setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, BatchAutoJoinStrategy));
+            setJoinStrategy("batch");
+          }}
+        >
+          Batch
+        </button>
+      </div>
       <h1 className="card-title">Record Join Example</h1>
-
       <label htmlFor="private-key" className="field-label">
         Private Key
       </label>
@@ -167,7 +194,7 @@ function App() {
       <button
         type="button"
         className="derive-btn"
-        onClick={handleDerive}
+        onClick={() => handleDerive(joinStrategy)}
         disabled={!privateKeyInput.trim() || loading}
       >
         {loading ? 'Deriving\u2026' : 'Derive Keys'}
