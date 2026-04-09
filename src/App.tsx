@@ -152,7 +152,6 @@ function App() {
           Mainnet
         </button>
       </div>
-      <div/>
       <h1 className="card-title">Record Join Example</h1>
       <label htmlFor="private-key" className="field-label">
         Private Key
