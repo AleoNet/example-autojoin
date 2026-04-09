@@ -46,7 +46,6 @@ export class BatchAutoJoinStrategy implements JoinStrategy {
   }
 
   private getBatchProgram(programName: string, batchSize: number): string {
-
     if (batchSize < 1 || batchSize > 16) {
       throw new Error('Invalid batch size for this token');
     }
