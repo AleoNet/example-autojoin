@@ -290,7 +290,6 @@ function App() {
               ))}
             </ul>
           )}
-
           {records.length > 0 && (
             <button
               type="button"
