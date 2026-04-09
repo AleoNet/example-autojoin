@@ -49,7 +49,7 @@ export class BatchAutoJoinStrategy implements JoinStrategy {
     if (batchSize < 1 || batchSize > 16) {
       throw new Error('Invalid batch size for this token');
     }
-    const prefix = programName == 'credits.aleo' ? "" : "aj_";
+    const prefix = programName == 'credits.aleo' ? "autojoin" : "aj";
     const suffix = (batchSize >= 2 && batchSize <= 10) ? "2_10" : ((batchSize >= 11 && batchSize <= 14) ? "11_14" : "15_16");
     const batchProgramName =(() => {
       switch (programName) {
