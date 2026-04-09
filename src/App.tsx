@@ -2,10 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import './App.css';
 import {AleoClient, type AleoRecord, type Account} from "./aleo";
 import {AutoJoinClient} from "./aleo/autojoin/autoJoinClient.ts";
-// import type {JoinStrategyConstructor} from "./aleo/autojoin/joinStrategy.ts";
 import {BasicAutoJoinStrategy} from "./aleo/autojoin/strategies/basicAutoJoinStrategy.ts";
 import {BatchAutoJoinStrategy} from "./aleo/autojoin/strategies/batchAutoJoinStrategy.ts";
-import type { JoinStrategy } from './aleo/autojoin/joinStrategy.ts';
 
 const TOKEN_PROGRAMS = {
   'testnet': [
@@ -155,28 +153,6 @@ function App() {
         </button>
       </div>
       <div/>
-      <div className="network-toggle">
-        <button
-          type="button"
-          className={`network-btn${joinStrategy === "basic" ? ' network-btn--active' : ''}`}
-          onClick={() => {
-            // setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, BasicAutoJoinStrategy));
-            setJoinStrategy("basic");
-          }}
-        >
-          Basic
-        </button>
-        <button
-          type="button"
-          className={`network-btn${joinStrategy === "batch" ? ' network-btn--active' : ''}`}
-          onClick={() => {
-            // setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, BatchAutoJoinStrategy));
-            setJoinStrategy("batch");
-          }}
-        >
-          Batch
-        </button>
-      </div>
       <h1 className="card-title">Record Join Example</h1>
       <label htmlFor="private-key" className="field-label">
         Private Key
@@ -248,7 +224,35 @@ function App() {
             </button>
           </div>
         </div>
-
+        <div className="form-group">
+          <label className="field-label">Strategy</label>
+        </div>
+        <div className="strategy-toggle">
+          <button
+            type="button"
+            className={`strategy-btn${joinStrategy === "basic" ? ' strategy-btn--active' : ''}`}
+            onClick={() => {
+              setLoading(true);
+              setJoinStrategy("basic");
+              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, BasicAutoJoinStrategy));
+              setLoading(false);
+            }}
+          >
+            Basic
+          </button>
+          <button
+            type="button"
+            className={`strategy-btn${joinStrategy === "batch" ? ' strategy-btn--active' : ''}`}
+            onClick={() => {
+              setLoading(true);
+              setJoinStrategy("batch");
+              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, BatchAutoJoinStrategy));
+              setLoading(false);
+            }}
+          >
+            Batch
+          </button>
+        </div>
         <div className="form-group">
           <label htmlFor="program-name" className="field-label">
             Program Name
@@ -287,6 +291,7 @@ function App() {
               ))}
             </ul>
           )}
+
           {records.length > 0 && (
             <button
               type="button"

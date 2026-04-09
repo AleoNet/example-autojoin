@@ -160,6 +160,38 @@
   color: #fff;
 }
 
+.strategy-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.strategy-btn {
+  border: none;
+  background: none;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-family: var(--sans);
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text);
+  transition: background 0.15s, color 0.15s;
+
+  &:not(:last-child) {
+    border-right: 1px solid var(--border);
+  }
+
+  &:hover:not(.strategy-btn--active) {
+    background: var(--code-bg);
+  }
+}
+
+.strategy-btn--active {
+  background: var(--accent);
+  color: #fff;
+}
+
 .records-list {
   list-style: none;
   padding: 0;
