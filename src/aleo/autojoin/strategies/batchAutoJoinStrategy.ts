@@ -46,27 +46,13 @@ export class BatchAutoJoinStrategy implements JoinStrategy {
   }
 
   private getBatchProgram(programName: string, batchSize: number): string {
+
     if (batchSize < 1 || batchSize > 16) {
       throw new Error('Invalid batch size for this token');
     }
     const prefix = programName == 'credits.aleo' ? "autojoin" : "aj";
     const suffix = (batchSize >= 2 && batchSize <= 10) ? "2_10" : ((batchSize >= 11 && batchSize <= 14) ? "11_14" : "15_16");
-    const batchProgramName =(() => {
-      switch (programName) {
-        case "credits.aleo":
-          return "autojoin_credits";
-        case "usdcx_stablecoin.aleo":
-          return "usdcx_stablecoin";
-        case "test_usdcx_stablecoin.aleo":
-          return "test_usdcx_stablecoin";
-        case "usad_stablecoin.aleo":
-          return "usad_stablecoin"
-        case "test_usad_stablecoin.aleo":
-          return "test_usad_stablecoin"
-      }
-    })(); 
-    
-    return `${prefix}${batchProgramName}_${suffix}.aleo`;
+    return `${prefix}_${programName.split(".")[0]}_${suffix}.aleo`;
   }
 
   async joinRecords(records: AleoRecord[]): Promise<AleoRecord> {
