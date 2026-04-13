@@ -3,6 +3,7 @@ import './App.css';
 import {AleoClient, type AleoRecord, type Account} from "./aleo";
 import {AutoJoinClient} from "./aleo/autojoin/autoJoinClient.ts";
 import {BasicAutoJoinStrategy} from "./aleo/autojoin/strategies/basicAutoJoinStrategy.ts";
+import {BatchAutoJoinStrategy} from "./aleo/autojoin/strategies/batchAutoJoinStrategy.ts";
 
 const TOKEN_PROGRAMS = {
   'testnet': [
@@ -16,6 +17,8 @@ const TOKEN_PROGRAMS = {
     'usdcx_stablecoin.aleo',
   ]
 };
+
+type joinStrategyName = "basic" | "batch"; 
 
 function App() {
   const testnetAleoClient = useMemo(() => new AleoClient('testnet', {
@@ -31,6 +34,7 @@ function App() {
 
   const [aleoClient, setAleoClient] = useState<AleoClient<'testnet' | 'mainnet'>>(testnetAleoClient);
   const [network, setNetwork] = useState<'testnet' | 'mainnet'>('testnet');
+  const [joinStrategy, setJoinStrategy] = useState<joinStrategyName>("basic");
   const [aleoAutoJoin, setAutoJoinClient] = useState<AutoJoinClient | undefined>();
 
   const [privateKeyInput, setPrivateKeyInput] = useState(import.meta.env.VITE_DEFAULT_PKEY || '');
@@ -61,6 +65,7 @@ function App() {
     setAutoJoinClient(undefined);
   }, [network, testnetAleoClient, mainnetAleoClient]);
 
+
   async function handleDerive() {
     setLoading(true);
     setError(null);
@@ -72,7 +77,7 @@ function App() {
       setAleoAccount(account);
       setAddress(account.address().to_string());
       setViewKey(account.viewKey().to_string());
-      setAutoJoinClient(new AutoJoinClient(aleoClient, account, BasicAutoJoinStrategy));
+      setAutoJoinClient(new AutoJoinClient(aleoClient, account, getJoinStrategyClass(joinStrategy)));
       await aleoClient.registerAccountForRecordScanning(account);
     } catch (e: unknown) {
       if (e instanceof Error) {
@@ -83,10 +88,19 @@ function App() {
     }
   }
 
+  function getJoinStrategyClass(strategy: joinStrategyName) {
+    switch (strategy) {
+      case 'basic':
+        return BasicAutoJoinStrategy;
+      case 'batch':
+        return BatchAutoJoinStrategy;
+    }
+  }
+
   function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text);
   }
-
+  
   async function handleLoadRecords() {
     setError(null);
     setRecordsLoading(true);
@@ -139,7 +153,6 @@ function App() {
         </button>
       </div>
       <h1 className="card-title">Record Join Example</h1>
-
       <label htmlFor="private-key" className="field-label">
         Private Key
       </label>
@@ -210,7 +223,35 @@ function App() {
             </button>
           </div>
         </div>
-
+        <div className="form-group">
+          <label className="field-label">Strategy</label>
+        </div>
+        <div className="strategy-toggle">
+          <button
+            type="button"
+            className={`strategy-btn${joinStrategy === "basic" ? ' strategy-btn--active' : ''}`}
+            onClick={() => {
+              setLoading(true);
+              setJoinStrategy("basic");
+              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, BasicAutoJoinStrategy));
+              setLoading(false);
+            }}
+          >
+            Basic
+          </button>
+          <button
+            type="button"
+            className={`strategy-btn${joinStrategy === "batch" ? ' strategy-btn--active' : ''}`}
+            onClick={() => {
+              setLoading(true);
+              setJoinStrategy("batch");
+              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, BatchAutoJoinStrategy));
+              setLoading(false);
+            }}
+          >
+            Batch
+          </button>
+        </div>
         <div className="form-group">
           <label htmlFor="program-name" className="field-label">
             Program Name
