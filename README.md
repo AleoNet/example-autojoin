@@ -11,7 +11,31 @@ The library lives in `src/aleo/` and provides two main building blocks:
 
 ### JoinStrategy
 
-A `JoinStrategy` controls how records are joined. The included `BasicAutoJoinStrategy` supports `credits.aleo`, `usad_stablecoin.aleo`, `usdcx_stablecoin.aleo`, and their testnet equivalents. You can provide your own strategy by implementing the interface:
+A `JoinStrategy` controls how records are joined. Two strategies are included:
+
+#### `BasicAutoJoinStrategy`
+
+Calls the standard `join(recordA, recordB)` transition directly on the token's own program. Works with any token that exposes a `join` transition.
+
+**Timing:** Joins records in pairs across parallel rounds. Reducing N records requires ⌈log₂ N⌉ rounds of on-chain confirmations (e.g. 16 records → 4 rounds). The rounds execute multiple join transactions with a total of: 8 + 4 + 2 + 1 = 15 transactions.
+
+#### `BatchAutoJoinStrategy`
+
+Calls `join_N` transitions on dedicated batch wrapper programs (e.g. `autojoin_credits_2_10.aleo`) that accept 2–16 records in a single transaction.
+
+**Supported programs:** Same base set as `BasicAutoJoinStrategy`, but only programs that have deployed batch wrappers on-chain. Arbitrary tokens with a `join` transition are **not** supported. More on chain programs can be deployed to support batch joining of other tokens. We expect to deploy a generic "dynamic dispatch" batch join program later this year (2026). 
+
+**Timing:** Up to 16 records collapse in one transaction. Most joins complete in a single confirmation round, making this significantly faster than `BasicAutoJoinStrategy` for large record sets. Ex. 32 records can be joined in 2 rounds of 3 total transactions.
+
+**Cost:** The batch programs introduce a small gas fee cost overhead over just using the built-in `join` calls, however in practice this is very small in absolute terms due to the low cost of the Aleo network transactions.
+
+| | `BasicAutoJoinStrategy` | `BatchAutoJoinStrategy` |
+|---|---|---|
+| Works with any `join` token | Yes | No — requires batch wrapper programs |
+| Records per transaction | 2 | 2–16 |
+| Rounds to join N records | ⌈log₂ N⌉ | ⌈log₁₆ N⌉ |
+
+You can provide your own strategy by implementing the interface:
 
 ```ts
 interface JoinStrategy {
@@ -81,28 +105,6 @@ console.log('Final record tx:', joinedRecord.transactionId);
 ```
 
 `joinRecords` validates that all records share the same program, are owned by the same address, are supported by the strategy, and each have a `transactionId`. It throws a descriptive error if any condition is not met or if on-chain confirmation times out.
-
-#### Using a custom strategy
-
-```ts
-import type { JoinStrategy } from './src/aleo/autojoin/joinStrategy';
-import type { AutoJoinClient } from './src/aleo/autojoin/autoJoinClient';
-import type { AleoRecord } from './src/aleo/aleoClient';
-
-class MyJoinStrategy implements JoinStrategy {
-  constructor(private readonly client: AutoJoinClient) {}
-
-  isSupportedProgram(programName: string): boolean {
-    return programName === 'my_token.aleo';
-  }
-
-  async joinRecords(records: AleoRecord[]): Promise<AleoRecord> {
-    // custom join logic
-  }
-}
-
-const autoJoinClient = new AutoJoinClient(aleoClient, account, MyJoinStrategy);
-```
 
 ---
 
