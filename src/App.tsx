@@ -35,6 +35,7 @@ function App() {
   const [aleoClient, setAleoClient] = useState<AleoClient<'testnet' | 'mainnet'>>(testnetAleoClient);
   const [network, setNetwork] = useState<'testnet' | 'mainnet'>('testnet');
   const [joinStrategy, setJoinStrategy] = useState<joinStrategyName>("basic");
+  const [feePrivate, setFeePrivate] = useState<boolean>(false);
   const [aleoAutoJoin, setAutoJoinClient] = useState<AutoJoinClient | undefined>();
 
   const [privateKeyInput, setPrivateKeyInput] = useState(import.meta.env.VITE_DEFAULT_PKEY || '');
@@ -77,7 +78,7 @@ function App() {
       setAleoAccount(account);
       setAddress(account.address().to_string());
       setViewKey(account.viewKey().to_string());
-      setAutoJoinClient(new AutoJoinClient(aleoClient, account, getJoinStrategyClass(joinStrategy)));
+      setAutoJoinClient(new AutoJoinClient(aleoClient, account, feePrivate, getJoinStrategyClass(joinStrategy)));
       await aleoClient.registerAccountForRecordScanning(account);
     } catch (e: unknown) {
       if (e instanceof Error) {
@@ -233,7 +234,7 @@ function App() {
             onClick={() => {
               setLoading(true);
               setJoinStrategy("basic");
-              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, BasicAutoJoinStrategy));
+              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, feePrivate, getJoinStrategyClass(joinStrategy)));
               setLoading(false);
             }}
           >
@@ -245,11 +246,38 @@ function App() {
             onClick={() => {
               setLoading(true);
               setJoinStrategy("batch");
-              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, BatchAutoJoinStrategy));
+              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, feePrivate, getJoinStrategyClass(joinStrategy)));
               setLoading(false);
             }}
           >
             Batch
+          </button>
+        </div>
+        <label className="field-label">Fee</label>
+        <div className="fee-toggle">
+          <button
+            type="button"
+            className={`strategy-btn${feePrivate === false ? ' strategy-btn--active' : ''}`}
+            onClick={() => {
+              setLoading(true);
+              setFeePrivate(false)
+              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, feePrivate, getJoinStrategyClass(joinStrategy)));
+              setLoading(false);
+            }}
+          >
+            Public
+          </button>
+          <button
+            type="button"
+            className={`strategy-btn${feePrivate === true ? ' strategy-btn--active' : ''}`}
+            onClick={() => {
+              setLoading(true);
+              setFeePrivate(true)
+              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, feePrivate, getJoinStrategyClass(joinStrategy)));
+              setLoading(false);
+            }}
+          >
+            Private
           </button>
         </div>
         <div className="form-group">

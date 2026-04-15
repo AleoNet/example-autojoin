@@ -158,7 +158,11 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
       unspent: true,
       filter: { programs: programNames },
     });
-    return records.map(r => this.ownedRecordToAleoRecord(r, account));
+
+    return records
+      .filter(r => (r.record_name === "credits" || r.record_name == "Token"))
+      .map(r =>this.ownedRecordToAleoRecord(r, account))
+      .filter(r => r.amount!=="0");
   }
 
   ownedRecordToAleoRecord(ownedRecord: OwnedRecord, account: Account): AleoRecord {

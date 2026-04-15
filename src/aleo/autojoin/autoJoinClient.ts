@@ -11,13 +11,15 @@ export class AutoJoinClient {
   readonly aleoClient: AleoClient<AleoNetwork>;
   readonly account: Account;
   readonly accountAddress: string;
+  readonly feePrivate: boolean = false;
   private programManager?: ProgramManager;
   private readonly joinStrategyClass: JoinStrategyConstructor;
 
-  constructor(aleoClient: AleoClient<AleoNetwork>, account: Account, joinStrategyClass: JoinStrategyConstructor) {
+  constructor(aleoClient: AleoClient<AleoNetwork>, account: Account, feePrivate: boolean, joinStrategyClass: JoinStrategyConstructor) {
     this.aleoClient = aleoClient;
     this.account = account;
     this.accountAddress = account.address().to_string();
+    this.feePrivate = feePrivate;
     this.joinStrategyClass = joinStrategyClass;
   }
 
