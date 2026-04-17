@@ -225,6 +225,27 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
     });
   }
 
+  /** Calls out to the delegated proving system to submit a request for proving. **/
+  async submitProvingRequestwithRetries(provingRequest: ProvingRequest, retries: number, attempts?: number): Promise<ProvingResponse> {
+    try {
+      const provingResponse = await this.submitProvingRequest(provingRequest);
+      return provingResponse;
+    } catch (error) {
+      let num_attempts = (attempts ? attempts : 0);
+      if (retries > 0) {
+        await new Promise(res => setTimeout(res, 5000 * (num_attempts+1)));
+        console.log(`Retrying... (${retries} left)`);
+        return this.submitProvingRequestwithRetries(provingRequest, retries - 1,(num_attempts+1));
+      } else {
+          if (error instanceof Error) {
+            throw Error(error.message);
+          } else {
+            throw Error("An unexpected error occurred");
+          }
+      }
+    }
+  }
+
   async submitTransaction(transaction: Transaction, waitForConfirmation: boolean = false) {
     const transactionId = await this.networkClient.submitTransaction(transaction);
     if (waitForConfirmation) {

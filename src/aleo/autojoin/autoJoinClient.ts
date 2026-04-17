@@ -11,15 +11,13 @@ export class AutoJoinClient {
   readonly aleoClient: AleoClient<AleoNetwork>;
   readonly account: Account;
   readonly accountAddress: string;
-  readonly feePrivate: boolean = false;
   private programManager?: ProgramManager;
   private readonly joinStrategyClass: JoinStrategyConstructor;
 
-  constructor(aleoClient: AleoClient<AleoNetwork>, account: Account, feePrivate: boolean, joinStrategyClass: JoinStrategyConstructor) {
+  constructor(aleoClient: AleoClient<AleoNetwork>, account: Account, joinStrategyClass: JoinStrategyConstructor) {
     this.aleoClient = aleoClient;
     this.account = account;
     this.accountAddress = account.address().to_string();
-    this.feePrivate = feePrivate;
     this.joinStrategyClass = joinStrategyClass;
   }
 
@@ -37,11 +35,24 @@ export class AutoJoinClient {
     return this.programManager;
   }
 
-  async joinRecords(records: AleoRecord[]): Promise<AleoRecord> {
+  async joinRecords(records: AleoRecord[], privateFeeRecord?: string): Promise<AleoRecord[]> {
+      return (privateFeeRecord ? this.joinRecordsWithPrivateFee(records, privateFeeRecord) : this.joinRecordsWithPublicFee(records));
+  }
+
+  async joinRecordsWithPublicFee(records: AleoRecord[]): Promise<AleoRecord[]> {
     if (records.length === 0) throw new Error('No records found');
-    if (records.length === 1) return records[0];
+    if (records.length === 1) return [records[0]];
     const joinStrategy = new this.joinStrategyClass(this);
     AutoJoinClient.validateRecordsForJoining(records, joinStrategy);
     return await joinStrategy.joinRecords(records);
+  }
+
+  async joinRecordsWithPrivateFee(records: AleoRecord[], privateFeeRecord: string): Promise<AleoRecord[]> {
+    const filteredRecords = records.filter(r => r.cipherText.toString() !== privateFeeRecord)
+    if (filteredRecords.length === 0) throw new Error('No records found');
+    if (filteredRecords.length === 1) return records;
+    const joinStrategy = new this.joinStrategyClass(this);
+    AutoJoinClient.validateRecordsForJoining(filteredRecords, joinStrategy);
+    return await joinStrategy.joinRecords(filteredRecords, this.aleoClient.recordCipherTextStringToAleoRecord(privateFeeRecord, this.account, "credits.aleo",""));
   }
 }

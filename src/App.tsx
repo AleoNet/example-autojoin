@@ -36,6 +36,7 @@ function App() {
   const [network, setNetwork] = useState<'testnet' | 'mainnet'>('testnet');
   const [joinStrategy, setJoinStrategy] = useState<joinStrategyName>("basic");
   const [feePrivate, setFeePrivate] = useState<boolean>(false);
+  const [privateFeeRecord, setPrivateFeeRecord] = useState<string>("");
   const [aleoAutoJoin, setAutoJoinClient] = useState<AutoJoinClient | undefined>();
 
   const [privateKeyInput, setPrivateKeyInput] = useState(import.meta.env.VITE_DEFAULT_PKEY || '');
@@ -78,7 +79,7 @@ function App() {
       setAleoAccount(account);
       setAddress(account.address().to_string());
       setViewKey(account.viewKey().to_string());
-      setAutoJoinClient(new AutoJoinClient(aleoClient, account, feePrivate, getJoinStrategyClass(joinStrategy)));
+      setAutoJoinClient(new AutoJoinClient(aleoClient, account, getJoinStrategyClass(joinStrategy)));
       await aleoClient.registerAccountForRecordScanning(account);
     } catch (e: unknown) {
       if (e instanceof Error) {
@@ -122,8 +123,13 @@ function App() {
     setError(null);
     setJoinLoading(true);
     try {
-      const newRecord = await aleoAutoJoin.joinRecords(records);
-      setRecords([newRecord]);
+      if (feePrivate) {
+        const newRecords = await aleoAutoJoin.joinRecords(records, privateFeeRecord);
+        setRecords(newRecords);
+      } else {
+        const newRecords = await aleoAutoJoin.joinRecords(records);
+        setRecords(newRecords);
+      }
     } catch (e: unknown) {
       if (e instanceof Error) {
         setError(`Join operation failed: ${e}`);
@@ -234,7 +240,7 @@ function App() {
             onClick={() => {
               setLoading(true);
               setJoinStrategy("basic");
-              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, feePrivate, getJoinStrategyClass(joinStrategy)));
+              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, getJoinStrategyClass("basic")));
               setLoading(false);
             }}
           >
@@ -246,7 +252,7 @@ function App() {
             onClick={() => {
               setLoading(true);
               setJoinStrategy("batch");
-              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, feePrivate, getJoinStrategyClass(joinStrategy)));
+              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, getJoinStrategyClass("batch")));
               setLoading(false);
             }}
           >
@@ -259,10 +265,7 @@ function App() {
             type="button"
             className={`strategy-btn${feePrivate === false ? ' strategy-btn--active' : ''}`}
             onClick={() => {
-              setLoading(true);
-              setFeePrivate(false)
-              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, feePrivate, getJoinStrategyClass(joinStrategy)));
-              setLoading(false);
+              setFeePrivate(false);
             }}
           >
             Public
@@ -271,15 +274,21 @@ function App() {
             type="button"
             className={`strategy-btn${feePrivate === true ? ' strategy-btn--active' : ''}`}
             onClick={() => {
-              setLoading(true);
-              setFeePrivate(true)
-              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, feePrivate, getJoinStrategyClass(joinStrategy)));
-              setLoading(false);
+              setFeePrivate(true);
             }}
           >
             Private
           </button>
         </div>
+        {feePrivate && (
+        <div>
+          <label className="field-label">Fee Record (Ciphertext)</label>
+          <div className="input-wrap">
+            <input className="form-input" placeholder='record1...' onChange={e => setPrivateFeeRecord(e.target.value)}/>
+          </div>
+        </div>
+        )}
+
         <div className="form-group">
           <label htmlFor="program-name" className="field-label">
             Program Name
@@ -308,10 +317,14 @@ function App() {
             <ul className="records-list">
               {records.map((record, i) => (
                 <li key={i} className="record-item">
+                  <span className="record-number-label">Record #{i+1}:</span>
+                  <span className="record-value"/>
                   <span className="record-label">Amount</span>
                   <span className="record-value">
                     {record.amount === undefined ? "-" : (Number(record.amount) / 1e6).toFixed(6)}
                   </span>
+                  <span className="record-label">Ciphertext</span>
+                  <span className="record-value">{record.cipherText.toString()}</span>
                   <span className="record-label">Tx ID</span>
                   <span className="record-value">{record.transactionId}</span>
                 </li>
@@ -322,7 +335,7 @@ function App() {
             <button
               type="button"
               className="derive-btn"
-              disabled={records.length < 2 || recordsLoading || joinLoading}
+              disabled={records.length < 2 || recordsLoading || joinLoading || (feePrivate && privateFeeRecord==="")}
               onClick={handleJoin}
             >
               {joinLoading ? 'Joining\u2026' : 'Join Records'}

@@ -251,6 +251,14 @@
   white-space: nowrap;
 }
 
+.record-number-label {
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  text-decoration: underline;
+  font-size: 14px;
+}
+
 .record-value {
   font-family: var(--mono);
   color: var(--text-h);
