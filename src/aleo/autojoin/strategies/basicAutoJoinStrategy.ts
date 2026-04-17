@@ -16,7 +16,6 @@ export class BasicAutoJoinStrategy implements JoinStrategy {
     "test_usdcx_stablecoin.aleo",
     "test_usad_stablecoin.aleo",
   ];
-  private feeRecords: AleoRecord[] = [];
 
   constructor(autoJoinClient: AutoJoinClient) {
     this.autoJoinClient = autoJoinClient;
@@ -33,6 +32,7 @@ export class BasicAutoJoinStrategy implements JoinStrategy {
     const programManager = await this.autoJoinClient.getProgramManager();
 
     if (privateFeeRecord) {
+      let feeRecords: AleoRecord[] = [];
       const total_join_ops = current.length - 1;
       const join_cost_in_microcredits = Number(await programManager.estimateExecutionFee({
         programName: records[0].programName,
@@ -70,7 +70,7 @@ export class BasicAutoJoinStrategy implements JoinStrategy {
           "credits.aleo",
           transaction.id.trim(),
         );
-        this.feeRecords.push(newFeeRecord);
+        feeRecords.push(newFeeRecord);
 
         const secondOutput = transaction.execution?.transitions?.[0]?.outputs?.[1];
         if (!secondOutput?.value) throw new Error('No output record 2 in split transaction');
@@ -85,7 +85,7 @@ export class BasicAutoJoinStrategy implements JoinStrategy {
         // Pair up records, potentially leaving the last one unpaired
         const triplets: [AleoRecord, AleoRecord, AleoRecord][] = [];
         for (let i = 0; i + 1 < current.length; i += 2) {
-          triplets.push([current[i], current[i + 1], this.feeRecords.pop()!]);
+          triplets.push([current[i], current[i + 1], feeRecords.pop()!]);
         }
 
         const joinedRecords = await Promise.all(triplets.map(async ([a, b, fee]) => {
