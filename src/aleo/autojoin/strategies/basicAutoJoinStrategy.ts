@@ -33,6 +33,7 @@ export class BasicAutoJoinStrategy implements JoinStrategy {
     const programManager = await this.autoJoinClient.getProgramManager();
 
     if (feePrivate) {
+      // Determine number of join operations needed and the cost for each operation
       const totalJoinOps = current.length - 1;
       const joinCostInMicrocredits = Number(await programManager.estimateExecutionFee({
         programName: records[0].programName,
@@ -40,7 +41,9 @@ export class BasicAutoJoinStrategy implements JoinStrategy {
       }));
       const totalCostInMicrocredits = (joinCostInMicrocredits + 10000) * totalJoinOps;
 
+      // Fetch the list of available Aleo Credits records (if joining USDCx / USAD)
       let creditsRecords = (records[0].programName) === "credits.aleo" ? records : await this.autoJoinClient.aleoClient.fetchUnspentRecords(this.autoJoinClient.account, ["credits.aleo"], this.autoJoinClient.accountAddress);
+      // Find a large enough record, split into a master fee record, then split that into the individual fee reocrds      
       let [leftoverCreditsRecords, masterFeeRecord] = await this.autoJoinClient.generateMasterFeeRecord(creditsRecords,totalCostInMicrocredits);
       let [feeRecords, remainder] = await this.autoJoinClient.generateFeeRecords(masterFeeRecord, totalJoinOps, joinCostInMicrocredits);
       if (records[0].programName === "credits.aleo") {
@@ -49,7 +52,7 @@ export class BasicAutoJoinStrategy implements JoinStrategy {
       }
       
       while (current.length > 1) {
-        // Pair up records, potentially leaving the last one unpaired
+        // Greedily pair up records with a private fee, potentially leaving the last one unpaired
         const triplets: [AleoRecord, AleoRecord, AleoRecord][] = [];
         for (let i = 0; i + 1 < current.length; i += 2) {
           triplets.push([current[i], current[i + 1], feeRecords.pop()!]);
@@ -70,7 +73,7 @@ export class BasicAutoJoinStrategy implements JoinStrategy {
 
     } else {
       while (current.length > 1) {
-        // Pair up records, potentially leaving the last one unpaired
+        // Greedily pair up records, potentially leaving the last one unpaired
         const pairs: [AleoRecord, AleoRecord][] = [];
         for (let i = 0; i + 1 < current.length; i += 2) {
           pairs.push([current[i], current[i + 1]]);
