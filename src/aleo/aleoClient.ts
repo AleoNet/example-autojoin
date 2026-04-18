@@ -159,6 +159,7 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
       filter: { programs: programNames },
     });
 
+    // Only return Token (USAD/USDCx) or credits (ALEO) records, not Credentials or any other record type
     return records
       .filter(r => (r.record_name === "credits" || r.record_name == "Token"))
       .map(r =>this.ownedRecordToAleoRecord(r, account))
@@ -225,7 +226,7 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
     });
   }
 
-  /** Calls out to the delegated proving system to submit a request for proving. **/
+  /** Calls out to the delegated proving system to submit a request for proving, retrying a number of times if there's an error. **/
   async submitProvingRequestwithRetries(provingRequest: ProvingRequest, retries: number, attempts?: number): Promise<ProvingResponse> {
     try {
       const provingResponse = await this.submitProvingRequest(provingRequest);
