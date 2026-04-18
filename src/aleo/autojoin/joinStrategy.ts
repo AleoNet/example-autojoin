@@ -2,7 +2,7 @@ import type {AutoJoinClient} from "./autoJoinClient.ts";
 import type {AleoRecord} from "../aleoClient.ts";
 
 export interface JoinStrategy {
-  joinRecords(records: AleoRecord[], privateFeeRecord?: AleoRecord): Promise<AleoRecord[]>;
+  joinRecords(records: AleoRecord[], feePrivate: boolean): Promise<AleoRecord[]>;
   isSupportedProgram(programName: string): boolean;
 }
 

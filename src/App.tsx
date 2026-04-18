@@ -36,7 +36,6 @@ function App() {
   const [network, setNetwork] = useState<'testnet' | 'mainnet'>('testnet');
   const [joinStrategy, setJoinStrategy] = useState<joinStrategyName>("basic");
   const [feePrivate, setFeePrivate] = useState<boolean>(false);
-  const [privateFeeRecord, setPrivateFeeRecord] = useState<string>("");
   const [aleoAutoJoin, setAutoJoinClient] = useState<AutoJoinClient | undefined>();
 
   const [privateKeyInput, setPrivateKeyInput] = useState(import.meta.env.VITE_DEFAULT_PKEY || '');
@@ -123,13 +122,8 @@ function App() {
     setError(null);
     setJoinLoading(true);
     try {
-      if (feePrivate) {
-        const newRecords = await aleoAutoJoin.joinRecords(records, privateFeeRecord);
-        setRecords(newRecords);
-      } else {
-        const newRecords = await aleoAutoJoin.joinRecords(records);
-        setRecords(newRecords);
-      }
+      const newRecords = await aleoAutoJoin.joinRecords(records, feePrivate);
+      setRecords(newRecords);
     } catch (e: unknown) {
       if (e instanceof Error) {
         setError(`Join operation failed: ${e}`);
@@ -280,14 +274,14 @@ function App() {
             Private
           </button>
         </div>
-        {feePrivate && (
+        {/* {feePrivate && (
         <div>
           <label className="field-label">Fee Record (Ciphertext)</label>
           <div className="input-wrap">
             <input className="form-input" placeholder='record1...' onChange={e => setPrivateFeeRecord(e.target.value)}/>
           </div>
         </div>
-        )}
+        )} */}
 
         <div className="form-group">
           <label htmlFor="program-name" className="field-label">
@@ -335,7 +329,7 @@ function App() {
             <button
               type="button"
               className="derive-btn"
-              disabled={records.length < 2 || recordsLoading || joinLoading || (feePrivate && privateFeeRecord==="")}
+              disabled={records.length < 2 || recordsLoading || joinLoading}
               onClick={handleJoin}
             >
               {joinLoading ? 'Joining\u2026' : 'Join Records'}

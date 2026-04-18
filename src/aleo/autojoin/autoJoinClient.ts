@@ -35,24 +35,11 @@ export class AutoJoinClient {
     return this.programManager;
   }
 
-  async joinRecords(records: AleoRecord[], privateFeeRecord?: string): Promise<AleoRecord[]> {
-      return (privateFeeRecord ? this.joinRecordsWithPrivateFee(records, privateFeeRecord) : this.joinRecordsWithPublicFee(records));
-  }
-
-  async joinRecordsWithPublicFee(records: AleoRecord[]): Promise<AleoRecord[]> {
+  async joinRecords(records: AleoRecord[], feePrivate: boolean): Promise<AleoRecord[]> {
     if (records.length === 0) throw new Error('No records found');
     if (records.length === 1) return [records[0]];
     const joinStrategy = new this.joinStrategyClass(this);
     AutoJoinClient.validateRecordsForJoining(records, joinStrategy);
-    return await joinStrategy.joinRecords(records);
-  }
-
-  async joinRecordsWithPrivateFee(records: AleoRecord[], privateFeeRecord: string): Promise<AleoRecord[]> {
-    const filteredRecords = records.filter(r => r.cipherText.toString() !== privateFeeRecord)
-    if (filteredRecords.length === 0) throw new Error('No records found');
-    if (filteredRecords.length === 1) return records;
-    const joinStrategy = new this.joinStrategyClass(this);
-    AutoJoinClient.validateRecordsForJoining(filteredRecords, joinStrategy);
-    return await joinStrategy.joinRecords(filteredRecords, this.aleoClient.recordCipherTextStringToAleoRecord(privateFeeRecord, this.account, "credits.aleo",""));
+    return await joinStrategy.joinRecords(records, feePrivate);
   }
 }
