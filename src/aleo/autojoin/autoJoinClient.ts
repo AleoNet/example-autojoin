@@ -78,12 +78,15 @@ export class AutoJoinClient {
       "credits.aleo",
       transaction.id.trim(),
     );
+    
     return [newRecord, change];
   }
 
   async generateMasterFeeRecord(creditsRecords: AleoRecord[], totalCostInMicrocredits: number): Promise<[AleoRecord[],AleoRecord]> {
-     creditsRecords.sort((r1, r2) => Number(r1.amount) - Number(r2.amount!));
+    // Sort credits records in ascending order of value
+    creditsRecords.sort((r1, r2) => Number(r1.amount) - Number(r2.amount!));
     for (let i: number = 0; i < creditsRecords.length; i++) {
+      // Find the first (smallest balance) credits record that is enough to cover the total cost of fees
       if (Number(creditsRecords[i].amount) >= totalCostInMicrocredits){
         let [newRecord, change] = await this.splitCreditsRecord(creditsRecords[i], totalCostInMicrocredits);
         creditsRecords.splice(i,1);
