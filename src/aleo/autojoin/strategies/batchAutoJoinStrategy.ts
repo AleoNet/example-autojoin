@@ -61,113 +61,31 @@ export class BatchAutoJoinStrategy implements JoinStrategy {
 
     if (feePrivate) {
       const programManager = await this.autoJoinClient.getProgramManager();
-      const total_join_15_ops = Math.floor((records.length - 1) / 14);
-      const final_join_N_function = `join_${((records.length - 1) % 14) + 1}`;
-      const join_15_cost_in_microcredits = Number(await programManager.estimateExecutionFee({
+      const totalJoin15Ops = Math.floor((records.length - 1) / 14);
+      const finalJoinNFunction = `join_${((records.length - 1) % 14) + 1}`;
+      const join15CostInMicrocredits = Number(await programManager.estimateExecutionFee({
         programName: this.getBatchProgram(records[0].programName, 15),
         functionName: `join_15`,
       }));
-      const join_N_cost_in_microcredits = Number(await programManager.estimateExecutionFee({
+      const joinNCostInMicrocredits = Number(await programManager.estimateExecutionFee({
         programName: this.getBatchProgram(records[0].programName, ((records.length - 1) % 14)+1),
-        functionName: final_join_N_function
+        functionName: finalJoinNFunction
       }));
-      const total_cost_in_microcredits = total_join_15_ops * (join_15_cost_in_microcredits + 10000) + (join_N_cost_in_microcredits);
-
-      let masterFeeRecord: AleoRecord | undefined = undefined;
-      let join15FeeRecords: AleoRecord[] = [];
-      let joinNFeeRecord: AleoRecord | undefined;
+      const totalCostInMicrocredits = totalJoin15Ops * (join15CostInMicrocredits + 10000) + joinNCostInMicrocredits;
 
       let creditsRecords = (records[0].programName) === "credits.aleo" ? records : await this.autoJoinClient.aleoClient.fetchUnspentRecords(this.autoJoinClient.account, ["credits.aleo"], this.autoJoinClient.accountAddress);
-      creditsRecords.sort((r1, r2) => Number(r1.amount) - Number(r2.amount!));
-      for (let i: number = 0; i < creditsRecords.length; i++) {
-        if (Number(creditsRecords[i].amount) >= total_cost_in_microcredits){
-          const provingRequest = await programManager.provingRequest({
-            programName: "credits.aleo",
-            functionName: 'split',
-            priorityFee: 0,
-            privateFee: false,
-            inputs: [
-              creditsRecords[i].plainText.toString(),
-              total_cost_in_microcredits.toString() + "u64"
-            ],
-            broadcast: true,
-          });
-          const {transaction, broadcast_result} = await this.autoJoinClient.aleoClient.submitProvingRequestwithRetries(provingRequest,3);
-          if (broadcast_result?.status !== "Accepted") throw new Error(`Broadcast status not accepted: ${JSON.stringify(broadcast_result)}`);
-          const transactionId = transaction?.id;
-          if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
-
-          const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
-          if (!firstOutput?.value) throw new Error('No output record 1 in split transaction');
-          masterFeeRecord = this.autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(
-            firstOutput.value,
-            this.autoJoinClient.account,
-            "credits.aleo",
-            transaction.id.trim(),
-          );
-
-          const secondOutput = transaction.execution?.transitions?.[0]?.outputs?.[1];
-          if (!secondOutput?.value) throw new Error('No output record 2 in split transaction');
-          let leftovers = this.autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(
-            secondOutput.value,
-            this.autoJoinClient.account,
-            "credits.aleo",
-            transaction.id.trim(),
-          );
-          creditsRecords.splice(i,1);
-          creditsRecords.push(leftovers);
-          break;
-        }
+      let [leftoverCreditsRecords, masterFeeRecord] = await this.autoJoinClient.findMasterFeeRecord(creditsRecords,totalCostInMicrocredits);
+      let [join15FeeRecords, joinNFeeRecord] = await this.autoJoinClient.generateFeeRecords(masterFeeRecord, totalJoin15Ops, join15CostInMicrocredits);
+      if (records[0].programName === "credits.aleo") {
+        current = leftoverCreditsRecords;
       }
-      if (masterFeeRecord === undefined) {
-        throw Error("No records with large enough balance to pay for gas fees.");
-      }
-      for (let i: number = 0; i < total_join_15_ops; i++) {
-        const provingRequest = await programManager.provingRequest({
-          programName: "credits.aleo",
-          functionName: 'split',
-          priorityFee: 0,
-          privateFee: false,
-          inputs: [
-            masterFeeRecord.plainText.toString(),
-            join_15_cost_in_microcredits.toString() + "u64"
-          ],
-          broadcast: true,
-        });
-        const {transaction, broadcast_result} = await this.autoJoinClient.aleoClient.submitProvingRequestwithRetries(provingRequest,3);
-        if (broadcast_result?.status !== "Accepted") throw new Error(`Broadcast status not accepted: ${JSON.stringify(broadcast_result)}`);
-        const transactionId = transaction?.id;
-        if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
-
-        const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
-        if (!firstOutput?.value) throw new Error('No output record 1 in split transaction');
-        let newFeeRecord = this.autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(
-          firstOutput.value,
-          this.autoJoinClient.account,
-          "credits.aleo",
-          transaction.id.trim(),
-        );
-        join15FeeRecords.push(newFeeRecord);
-
-        const secondOutput = transaction.execution?.transitions?.[0]?.outputs?.[1];
-        if (!secondOutput?.value) throw new Error('No output record 2 in split transaction');
-        masterFeeRecord = this.autoJoinClient.aleoClient.recordCipherTextStringToAleoRecord(
-          secondOutput.value,
-          this.autoJoinClient.account,
-          "credits.aleo",
-          transaction.id.trim(),
-        );
-      }
-      if (Number(masterFeeRecord.amount) !== join_N_cost_in_microcredits) {
-        console.log(Number(masterFeeRecord.amount));
-        console.log(join_N_cost_in_microcredits);
+  
+      if (Number(joinNFeeRecord.amount) !== joinNCostInMicrocredits) {
         throw Error("Error with fee calculations");
-      } else {
-        joinNFeeRecord = masterFeeRecord;
       }
 
       const batches: [AleoRecord[],AleoRecord][] = [];
-      for (let i: number = 0; i < total_join_15_ops; i++) {
+      for (let i: number = 0; i < totalJoin15Ops; i++) {
         batches.push([current.splice(0, 15),join15FeeRecords.pop()!]);
       }
 

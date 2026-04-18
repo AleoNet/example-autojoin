@@ -42,4 +42,102 @@ export class AutoJoinClient {
     AutoJoinClient.validateRecordsForJoining(records, joinStrategy);
     return await joinStrategy.joinRecords(records, feePrivate);
   }
+
+  async findMasterFeeRecord(creditsRecords: AleoRecord[], totalCostInMicrocredits: number): Promise<[AleoRecord[],AleoRecord]> {
+    const programManager = await this.getProgramManager();
+    let masterFeeRecord: AleoRecord | undefined = undefined;
+
+    creditsRecords.sort((r1, r2) => Number(r1.amount) - Number(r2.amount!));
+    for (let i: number = 0; i < creditsRecords.length; i++) {
+      if (Number(creditsRecords[i].amount) >= totalCostInMicrocredits){
+        const provingRequest = await programManager.provingRequest({
+          programName: "credits.aleo",
+          functionName: 'split',
+          priorityFee: 0,
+          privateFee: false,
+          inputs: [
+            creditsRecords[i].plainText.toString(),
+            totalCostInMicrocredits.toString() + "u64"
+          ],
+          broadcast: true,
+        });
+        const {transaction, broadcast_result} = await this.aleoClient.submitProvingRequestwithRetries(provingRequest,3);
+        if (broadcast_result?.status !== "Accepted") throw new Error(`Broadcast status not accepted: ${JSON.stringify(broadcast_result)}`);
+        const transactionId = transaction?.id;
+        if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
+
+        const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
+        if (!firstOutput?.value) throw new Error('No output record 1 in split transaction');
+        masterFeeRecord = this.aleoClient.recordCipherTextStringToAleoRecord(
+          firstOutput.value,
+          this.account,
+          "credits.aleo",
+          transaction.id.trim(),
+        );
+
+        const secondOutput = transaction.execution?.transitions?.[0]?.outputs?.[1];
+        if (!secondOutput?.value) throw new Error('No output record 2 in split transaction');
+        let leftovers = this.aleoClient.recordCipherTextStringToAleoRecord(
+          secondOutput.value,
+          this.account,
+          "credits.aleo",
+          transaction.id.trim(),
+        );
+        creditsRecords.splice(i,1);
+        creditsRecords.push(leftovers);
+        break;
+      }
+    }
+    if (masterFeeRecord === undefined) {
+      throw Error("No records with large enough balance to pay for gas fees.");
+    }
+    return [creditsRecords, masterFeeRecord];
+  }
+
+  async generateFeeRecords(creditsRecord: AleoRecord, numberOfRecordsNeeded: number, amountPerRecord: number,): Promise<[AleoRecord[],AleoRecord]> {
+    let leftovers: AleoRecord = creditsRecord;
+    let feeRecords: AleoRecord[] = [];
+
+    const programManager = await this.getProgramManager();
+    for (let i: number = 0; i < numberOfRecordsNeeded; i++) {
+      const provingRequest = await programManager.provingRequest({
+        programName: "credits.aleo",
+        functionName: 'split',
+        priorityFee: 0,
+        privateFee: false,
+        inputs: [
+          leftovers.plainText.toString(),
+          amountPerRecord.toString() + "u64"
+        ],
+        broadcast: true,
+      });
+      const {transaction, broadcast_result} = await this.aleoClient.submitProvingRequestwithRetries(provingRequest,3);
+      if (broadcast_result?.status !== "Accepted") throw new Error(`Broadcast status not accepted: ${JSON.stringify(broadcast_result)}`);
+      const transactionId = transaction?.id;
+      if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
+
+      const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
+      if (!firstOutput?.value) throw new Error('No output record 1 in split transaction');
+      let newFeeRecord = this.aleoClient.recordCipherTextStringToAleoRecord(
+        firstOutput.value,
+        this.account,
+        "credits.aleo",
+        transaction.id.trim(),
+      );
+      feeRecords.push(newFeeRecord);
+
+      const secondOutput = transaction.execution?.transitions?.[0]?.outputs?.[1];
+      if (!secondOutput?.value) throw new Error('No output record 2 in split transaction');
+      leftovers = this.aleoClient.recordCipherTextStringToAleoRecord(
+        secondOutput.value,
+        this.account,
+        "credits.aleo",
+        transaction.id.trim(),
+      );
+    }
+
+    return [feeRecords,leftovers];
+  }
+
+
 }
