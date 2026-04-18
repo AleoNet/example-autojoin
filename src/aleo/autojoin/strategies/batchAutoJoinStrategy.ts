@@ -74,7 +74,7 @@ export class BatchAutoJoinStrategy implements JoinStrategy {
       const totalCostInMicrocredits = totalJoin15Ops * (join15CostInMicrocredits + 10000) + joinNCostInMicrocredits;
 
       let creditsRecords = (records[0].programName) === "credits.aleo" ? records : await this.autoJoinClient.aleoClient.fetchUnspentRecords(this.autoJoinClient.account, ["credits.aleo"], this.autoJoinClient.accountAddress);
-      let [leftoverCreditsRecords, masterFeeRecord] = await this.autoJoinClient.findMasterFeeRecord(creditsRecords,totalCostInMicrocredits);
+      let [leftoverCreditsRecords, masterFeeRecord] = await this.autoJoinClient.generateMasterFeeRecord(creditsRecords,totalCostInMicrocredits);
       let [join15FeeRecords, joinNFeeRecord] = await this.autoJoinClient.generateFeeRecords(masterFeeRecord, totalJoin15Ops, join15CostInMicrocredits);
       if (records[0].programName === "credits.aleo") {
         current = leftoverCreditsRecords;
