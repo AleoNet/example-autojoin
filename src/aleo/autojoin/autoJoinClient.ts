@@ -82,22 +82,17 @@ export class AutoJoinClient {
   }
 
   async generateMasterFeeRecord(creditsRecords: AleoRecord[], totalCostInMicrocredits: number): Promise<[AleoRecord[],AleoRecord]> {
-    let masterFeeRecord: AleoRecord | undefined = undefined;
-
-    creditsRecords.sort((r1, r2) => Number(r1.amount) - Number(r2.amount!));
+     creditsRecords.sort((r1, r2) => Number(r1.amount) - Number(r2.amount!));
     for (let i: number = 0; i < creditsRecords.length; i++) {
       if (Number(creditsRecords[i].amount) >= totalCostInMicrocredits){
         let [newRecord, change] = await this.splitCreditsRecord(creditsRecords[i], totalCostInMicrocredits);
-        masterFeeRecord = newRecord;
         creditsRecords.splice(i,1);
         creditsRecords.push(change);
-        break;
+        return [creditsRecords, newRecord];;
       }
     }
-    if (masterFeeRecord === undefined) {
-      throw Error("No records with large enough balance to pay for gas fees.");
-    }
-    return [creditsRecords, masterFeeRecord];
+
+    throw Error("No records with large enough balance to pay for gas fees.");
   }
 
   async generateFeeRecords(creditsRecord: AleoRecord, numberOfRecordsNeeded: number, amountPerRecord: number): Promise<[AleoRecord[],AleoRecord]> {
