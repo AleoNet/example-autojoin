@@ -233,16 +233,23 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
     try {
       return await this.submitProvingRequest(provingRequest);
     } catch (error) {
+      const totalAttempts = attempts + 1;
       if (retries > 0) {
-        await new Promise(res => setTimeout(res, 5000 * (attempts+1)));
+        await new Promise(res => setTimeout(res, 5000 * totalAttempts));
         console.log(`Retrying... (${retries} left)`);
-        return this.submitProvingRequestWithRetries(provingRequest, retries - 1, attempts + 1);
+        return this.submitProvingRequestWithRetries(provingRequest, retries - 1, totalAttempts);
       } else {
-          if (error instanceof Error) {
-            throw new Error(error.message);
-          } else {
-            throw new Error("An unexpected error occurred");
-          }
+        if (error instanceof Error) {
+          throw new Error(
+            `submitProvingRequestWithRetries failed after ${totalAttempts} attempt(s): ${error.message}`,
+            { cause: error }
+          );
+        } else {
+          throw new Error(
+            `submitProvingRequestWithRetries failed after ${totalAttempts} attempt(s): An unexpected error occurred`,
+            { cause: error }
+          );
+        }
       }
     }
   }
