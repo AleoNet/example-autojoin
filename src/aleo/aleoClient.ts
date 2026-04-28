@@ -163,7 +163,7 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
 
     // Only return Token (USAD/USDCx) or credits (ALEO) records, not Credentials or any other record type
     return records
-      .filter(r => (r.record_name === "credits" || r.record_name == "Token"))
+      .filter(r => (r.record_name === "credits" || r.record_name === "Token"))
       .map(r =>this.ownedRecordToAleoRecord(r, account))
       .filter(r => r.amount!=="0");
   }
@@ -229,20 +229,19 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
   }
 
   /** Calls out to the delegated proving system to submit a request for proving, retrying a number of times if there's an error. **/
-  async submitProvingRequestWithRetries(provingRequest: ProvingRequest, retries: number, attempts?: number): Promise<ProvingResponse> {
+  async submitProvingRequestWithRetries(provingRequest: ProvingRequest, retries: number, attempts: number = 0): Promise<ProvingResponse> {
     try {
       return await this.submitProvingRequest(provingRequest);
     } catch (error) {
-      const num_attempts = (attempts ? attempts : 0);
       if (retries > 0) {
-        await new Promise(res => setTimeout(res, 5000 * (num_attempts+1)));
+        await new Promise(res => setTimeout(res, 5000 * (attempts+1)));
         console.log(`Retrying... (${retries} left)`);
-        return this.submitProvingRequestWithRetries(provingRequest, retries - 1,(num_attempts+1));
+        return this.submitProvingRequestWithRetries(provingRequest, retries - 1, attempts + 1);
       } else {
           if (error instanceof Error) {
-            throw Error(error.message);
+            throw new Error(error.message);
           } else {
-            throw Error("An unexpected error occurred");
+            throw new Error("An unexpected error occurred");
           }
       }
     }

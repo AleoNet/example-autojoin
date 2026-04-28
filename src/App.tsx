@@ -272,14 +272,6 @@ function App() {
             Private
           </button>
         </div>
-        {/* {feePrivate && (
-        <div>
-          <label className="field-label">Fee Record (Ciphertext)</label>
-          <div className="input-wrap">
-            <input className="form-input" placeholder='record1...' onChange={e => setPrivateFeeRecord(e.target.value)}/>
-          </div>
-        </div>
-        )} */}
 
         <div className="form-group">
           <label htmlFor="program-name" className="field-label">

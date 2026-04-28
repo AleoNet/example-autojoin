@@ -57,7 +57,7 @@ export class BatchAutoJoinStrategy implements JoinStrategy {
 
       // Fetch the list of available Aleo Credits records (if joining USDCx / USAD)
       const creditsRecords = (records[0].programName) === "credits.aleo" ? records : await this.autoJoinClient.aleoClient.fetchUnspentRecords(this.autoJoinClient.account, ["credits.aleo"], this.autoJoinClient.accountAddress);
-      // Find a large enough record, split into a master fee record, then split that into the individual fee reocrds
+      // Find a large enough record, split into a master fee record, then split that into the individual fee records
       const [leftoverCreditsRecords, masterFeeRecord] = await this.autoJoinClient.generateMasterFeeRecord(creditsRecords,totalCostInMicrocredits);
       const [join15FeeRecords, joinNFeeRecord] = await this.autoJoinClient.generateFeeRecords(masterFeeRecord, totalJoin15Ops, join15CostInMicrocredits);
       if (records[0].programName === "credits.aleo") {
