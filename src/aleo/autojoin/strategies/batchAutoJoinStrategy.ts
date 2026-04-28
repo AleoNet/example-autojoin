@@ -15,23 +15,6 @@ export class BatchAutoJoinStrategy implements JoinStrategy {
     "test_usdcx_stablecoin.aleo",
     "test_usad_stablecoin.aleo",
   ];
-  private readonly supportedBatchPrograms: string[] = [
-    "autojoin_credits_2_10.aleo",
-    "autojoin_credits_11_14.aleo",
-    "autojoin_credits_15_16.aleo",
-    "aj_usdcx_stablecoin_2_10.aleo",
-    "aj_usdcx_stablecoin_11_14.aleo",
-    "aj_usdcx_stablecoin_15_16.aleo",
-    "aj_test_usdcx_stablecoin_2_10.aleo",
-    "aj_test_usdcx_stablecoin_11_14.aleo",
-    "aj_test_usdcx_stablecoin_15_16.aleo",
-    "aj_usad_stablecoin_2_10.aleo",
-    "aj_usad_stablecoin_11_14.aleo",
-    "aj_usad_stablecoin_15_16.aleo",
-    "aj_test_usad_stablecoin_2_10.aleo",
-    "aj_test_usad_stablecoin_11_14.aleo",
-    "aj_test_usad_stablecoin_15_16.aleo"
-  ];
 
   constructor(autoJoinClient: AutoJoinClient) {
     this.autoJoinClient = autoJoinClient;
@@ -39,10 +22,6 @@ export class BatchAutoJoinStrategy implements JoinStrategy {
 
   isSupportedProgram(programName: string): boolean {
     return this.supportedPrograms.includes(programName.trim().toLowerCase());
-  }
-
-  isSupportedBatchProgram(batchProgramName: string): boolean {
-    return this.supportedBatchPrograms.includes(batchProgramName.trim().toLowerCase());
   }
 
   private getBatchProgram(programName: string, batchSize: number): string {
@@ -77,10 +56,10 @@ export class BatchAutoJoinStrategy implements JoinStrategy {
       const totalCostInMicrocredits = totalJoin15Ops * (join15CostInMicrocredits + 10000) + joinNCostInMicrocredits;
 
       // Fetch the list of available Aleo Credits records (if joining USDCx / USAD)
-      let creditsRecords = (records[0].programName) === "credits.aleo" ? records : await this.autoJoinClient.aleoClient.fetchUnspentRecords(this.autoJoinClient.account, ["credits.aleo"], this.autoJoinClient.accountAddress);
+      const creditsRecords = (records[0].programName) === "credits.aleo" ? records : await this.autoJoinClient.aleoClient.fetchUnspentRecords(this.autoJoinClient.account, ["credits.aleo"], this.autoJoinClient.accountAddress);
       // Find a large enough record, split into a master fee record, then split that into the individual fee reocrds
-      let [leftoverCreditsRecords, masterFeeRecord] = await this.autoJoinClient.generateMasterFeeRecord(creditsRecords,totalCostInMicrocredits);
-      let [join15FeeRecords, joinNFeeRecord] = await this.autoJoinClient.generateFeeRecords(masterFeeRecord, totalJoin15Ops, join15CostInMicrocredits);
+      const [leftoverCreditsRecords, masterFeeRecord] = await this.autoJoinClient.generateMasterFeeRecord(creditsRecords,totalCostInMicrocredits);
+      const [join15FeeRecords, joinNFeeRecord] = await this.autoJoinClient.generateFeeRecords(masterFeeRecord, totalJoin15Ops, join15CostInMicrocredits);
       if (records[0].programName === "credits.aleo") {
         current = leftoverCreditsRecords;
       }
@@ -136,13 +115,13 @@ export class BatchAutoJoinStrategy implements JoinStrategy {
       programName: this.getBatchProgram(records[0].programName, records.length),
       functionName: `join_${records.length}`,
       priorityFee: 0,
-      privateFee: (privateFeeRecord ? true : false),
+      privateFee: !!privateFeeRecord,
       feeRecord: privateFeeRecord?.plainText,
       inputs: records.map(r => r.plainText.toString()),
       broadcast: true,
     });
 
-    const {transaction, broadcast_result} = await this.autoJoinClient.aleoClient.submitProvingRequestwithRetries(provingRequest,3);
+    const {transaction, broadcast_result} = await this.autoJoinClient.aleoClient.submitProvingRequestWithRetries(provingRequest,3);
     if (broadcast_result?.status !== "Accepted") throw new Error(`Broadcast status not accepted: ${JSON.stringify(broadcast_result)}`);
 
     const transactionId = transaction?.id;

@@ -1,9 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import './App.css';
 import {AleoClient, type AleoRecord, type Account} from "./aleo";
-import {AutoJoinClient} from "./aleo/autojoin/autoJoinClient.ts";
-import {BasicAutoJoinStrategy} from "./aleo/autojoin/strategies/basicAutoJoinStrategy.ts";
-import {BatchAutoJoinStrategy} from "./aleo/autojoin/strategies/batchAutoJoinStrategy.ts";
+import {AutoJoinClient, BasicAutoJoinStrategy, BatchAutoJoinStrategy} from "./aleo/autojoin";
 
 const TOKEN_PROGRAMS = {
   'testnet': [
@@ -99,7 +97,7 @@ function App() {
   }
 
   function copyToClipboard(text: string) {
-    navigator.clipboard.writeText(text);
+    void navigator.clipboard.writeText(text);
   }
   
   async function handleLoadRecords() {
@@ -257,7 +255,7 @@ function App() {
         <div className="fee-toggle">
           <button
             type="button"
-            className={`strategy-btn${feePrivate === false ? ' strategy-btn--active' : ''}`}
+            className={`strategy-btn${!feePrivate ? ' strategy-btn--active' : ''}`}
             onClick={() => {
               setFeePrivate(false);
             }}
@@ -266,7 +264,7 @@ function App() {
           </button>
           <button
             type="button"
-            className={`strategy-btn${feePrivate === true ? ' strategy-btn--active' : ''}`}
+            className={`strategy-btn${feePrivate ? ' strategy-btn--active' : ''}`}
             onClick={() => {
               setFeePrivate(true);
             }}

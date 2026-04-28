@@ -42,10 +42,10 @@ export class BasicAutoJoinStrategy implements JoinStrategy {
       const totalCostInMicrocredits = (joinCostInMicrocredits + 10000) * totalJoinOps;
 
       // Fetch the list of available Aleo Credits records (if joining USDCx / USAD)
-      let creditsRecords = (records[0].programName) === "credits.aleo" ? records : await this.autoJoinClient.aleoClient.fetchUnspentRecords(this.autoJoinClient.account, ["credits.aleo"], this.autoJoinClient.accountAddress);
+      const creditsRecords = (records[0].programName) === "credits.aleo" ? records : await this.autoJoinClient.aleoClient.fetchUnspentRecords(this.autoJoinClient.account, ["credits.aleo"], this.autoJoinClient.accountAddress);
       // Find a large enough record, split into a master fee record, then split that into the individual fee reocrds      
-      let [leftoverCreditsRecords, masterFeeRecord] = await this.autoJoinClient.generateMasterFeeRecord(creditsRecords,totalCostInMicrocredits);
-      let [feeRecords, remainder] = await this.autoJoinClient.generateFeeRecords(masterFeeRecord, totalJoinOps, joinCostInMicrocredits);
+      const [leftoverCreditsRecords, masterFeeRecord] = await this.autoJoinClient.generateMasterFeeRecord(creditsRecords,totalCostInMicrocredits);
+      const [feeRecords, remainder] = await this.autoJoinClient.generateFeeRecords(masterFeeRecord, totalJoinOps, joinCostInMicrocredits);
       if (records[0].programName === "credits.aleo") {
         current = leftoverCreditsRecords;
         current.push(remainder);
@@ -101,7 +101,7 @@ export class BasicAutoJoinStrategy implements JoinStrategy {
       programName: recordA.programName,
       functionName: 'join',
       priorityFee: 0,
-      privateFee: (privateFeeRecord ? true : false),
+      privateFee: !!privateFeeRecord,
       feeRecord: privateFeeRecord?.plainText,
       inputs: [
         recordA.plainText.toString(),
@@ -109,7 +109,7 @@ export class BasicAutoJoinStrategy implements JoinStrategy {
       ],
       broadcast: true,
     });
-    const {transaction, broadcast_result} = await this.autoJoinClient.aleoClient.submitProvingRequestwithRetries(provingRequest,3);
+    const {transaction, broadcast_result} = await this.autoJoinClient.aleoClient.submitProvingRequestWithRetries(provingRequest,3);
     if (broadcast_result?.status !== "Accepted") throw new Error(`Broadcast status not accepted: ${JSON.stringify(broadcast_result)}`);
     
     const transactionId = transaction?.id;

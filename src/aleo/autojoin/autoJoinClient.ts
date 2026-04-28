@@ -56,14 +56,14 @@ export class AutoJoinClient {
       ],
       broadcast: true,
     });
-    const {transaction, broadcast_result} = await this.aleoClient.submitProvingRequestwithRetries(provingRequest,3);
+    const {transaction, broadcast_result} = await this.aleoClient.submitProvingRequestWithRetries(provingRequest,3);
     if (broadcast_result?.status !== "Accepted") throw new Error(`Broadcast status not accepted: ${JSON.stringify(broadcast_result)}`);
     const transactionId = transaction?.id;
     if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
 
     const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
     if (!firstOutput?.value) throw new Error('No output record 1 in split transaction');
-    let newRecord = this.aleoClient.recordCipherTextStringToAleoRecord(
+    const newRecord = this.aleoClient.recordCipherTextStringToAleoRecord(
       firstOutput.value,
       this.account,
       "credits.aleo",
@@ -72,7 +72,7 @@ export class AutoJoinClient {
 
     const secondOutput = transaction.execution?.transitions?.[0]?.outputs?.[1];
     if (!secondOutput?.value) throw new Error('No output record 2 in split transaction');
-    let change  = this.aleoClient.recordCipherTextStringToAleoRecord(
+    const change  = this.aleoClient.recordCipherTextStringToAleoRecord(
       secondOutput.value,
       this.account,
       "credits.aleo",
@@ -88,10 +88,10 @@ export class AutoJoinClient {
     for (let i: number = 0; i < creditsRecords.length; i++) {
       // Find the first (smallest balance) credits record that is enough to cover the total cost of fees
       if (Number(creditsRecords[i].amount) >= totalCostInMicrocredits){
-        let [newRecord, change] = await this.splitCreditsRecord(creditsRecords[i], totalCostInMicrocredits);
+        const [newRecord, change] = await this.splitCreditsRecord(creditsRecords[i], totalCostInMicrocredits);
         creditsRecords.splice(i,1);
         creditsRecords.push(change);
-        return [creditsRecords, newRecord];;
+        return [creditsRecords, newRecord];
       }
     }
 
@@ -100,12 +100,12 @@ export class AutoJoinClient {
 
   async generateFeeRecords(creditsRecord: AleoRecord, numberOfRecordsNeeded: number, amountPerRecord: number): Promise<[AleoRecord[],AleoRecord]> {
     let leftovers: AleoRecord = creditsRecord;
-    let feeRecords: AleoRecord[] = [];
+    const feeRecords: AleoRecord[] = [];
 
     for (let i: number = 0; i < numberOfRecordsNeeded; i++) {
-      let [newRecord, change] = await this.splitCreditsRecord(leftovers, amountPerRecord);
+      const [newRecord, change] = await this.splitCreditsRecord(leftovers, amountPerRecord);
       feeRecords.push(newRecord);
-      leftovers = change
+      leftovers = change;
     }
     return [feeRecords,leftovers];
   }

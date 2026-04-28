@@ -1,26 +1,28 @@
 import {
   Account as TestnetAccount,
-  RecordScanner as TestnetRecordScanner,
-  ProgramManager as TestnetProgramManager,
   type FunctionKeyProvider as TestnetFunctionKeyProvider,
+  ProgramManager as TestnetProgramManager,
   type RecordCiphertext as TestnetRecordCiphertext,
   type RecordPlaintext as TestnetRecordPlaintext,
+  RecordScanner as TestnetRecordScanner,
   type Transaction as TestnetTransaction,
 } from '@provablehq/sdk/testnet.js';
 import {
   Account as MainnetAccount,
-  RecordScanner as MainnetRecordScanner,
-  ProgramManager as MainnetProgramManager,
+  type ConfirmedTransactionJSON,
   type FunctionKeyProvider as MainnetFunctionKeyProvider,
   type OwnedRecord,
+  ProgramManager as MainnetProgramManager,
   type ProvingRequest,
   type ProvingResponse,
   type RecordCiphertext as MainnetRecordCiphertext,
   type RecordPlaintext as MainnetRecordPlaintext,
-  type Transaction as MainnetTransaction, type ConfirmedTransactionJSON,
+  RecordScanner as MainnetRecordScanner,
+  type Transaction as MainnetTransaction,
 } from '@provablehq/sdk/mainnet.js';
 import {loadNetwork, type Networks} from "@provablehq/sdk/dynamic.js";
 import {AleoNetworkClient} from "@provablehq/sdk";
+
 export {AleoNetworkClient} from "@provablehq/sdk";
 export { type OwnedRecord, type ProvingRequest, type ProvingResponse } from '@provablehq/sdk/mainnet.js';
 
@@ -227,16 +229,15 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
   }
 
   /** Calls out to the delegated proving system to submit a request for proving, retrying a number of times if there's an error. **/
-  async submitProvingRequestwithRetries(provingRequest: ProvingRequest, retries: number, attempts?: number): Promise<ProvingResponse> {
+  async submitProvingRequestWithRetries(provingRequest: ProvingRequest, retries: number, attempts?: number): Promise<ProvingResponse> {
     try {
-      const provingResponse = await this.submitProvingRequest(provingRequest);
-      return provingResponse;
+      return await this.submitProvingRequest(provingRequest);
     } catch (error) {
-      let num_attempts = (attempts ? attempts : 0);
+      const num_attempts = (attempts ? attempts : 0);
       if (retries > 0) {
         await new Promise(res => setTimeout(res, 5000 * (num_attempts+1)));
         console.log(`Retrying... (${retries} left)`);
-        return this.submitProvingRequestwithRetries(provingRequest, retries - 1,(num_attempts+1));
+        return this.submitProvingRequestWithRetries(provingRequest, retries - 1,(num_attempts+1));
       } else {
           if (error instanceof Error) {
             throw Error(error.message);
