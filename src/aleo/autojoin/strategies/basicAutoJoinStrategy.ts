@@ -35,11 +35,11 @@ export class BasicAutoJoinStrategy implements JoinStrategy {
     if (feePrivate) {
       // Determine number of join operations needed and the cost for each operation
       const totalJoinOps = current.length - 1;
-      const joinCostInMicrocredits = Number(await programManager.estimateExecutionFee({
+      const joinCostInMicrocredits = BigInt(await programManager.estimateExecutionFee({
         programName: records[0].programName,
         functionName: "join",
       }));
-      const totalCostInMicrocredits = (joinCostInMicrocredits + 10000) * totalJoinOps;
+      const totalCostInMicrocredits = (joinCostInMicrocredits + 10000n) * BigInt(totalJoinOps);
 
       // Fetch the list of available Aleo Credits records (if joining USDCx / USAD)
       const creditsRecords = (records[0].programName) === "credits.aleo" ? records : await this.autoJoinClient.aleoClient.fetchUnspentRecords(this.autoJoinClient.account, ["credits.aleo"], this.autoJoinClient.accountAddress);

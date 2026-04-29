@@ -305,7 +305,7 @@ function App() {
                   <span className="record-value"/>
                   <span className="record-label">Amount</span>
                   <span className="record-value">
-                    {record.amount === undefined ? "-" : (Number(record.amount) / 1e6).toFixed(6)}
+                    {record.amount === undefined ? "-" : (Number(BigInt(record.amount!) / BigInt(1e6))).toFixed(6)}
                   </span>
                   <span className="record-label">Ciphertext</span>
                   <span className="record-value">{record.cipherText.toString()}</span>

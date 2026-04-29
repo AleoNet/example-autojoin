@@ -45,15 +45,15 @@ export class BatchAutoJoinStrategy implements JoinStrategy {
       const programManager = await this.autoJoinClient.getProgramManager();
       const totalJoin15Ops = Math.floor((records.length - 1) / 14);
       const finalJoinNFunction = `join_${((records.length - 1) % 14) + 1}`;
-      const join15CostInMicrocredits = Number(await programManager.estimateExecutionFee({
+      const join15CostInMicrocredits = BigInt(await programManager.estimateExecutionFee({
         programName: this.getBatchProgram(records[0].programName, 15),
         functionName: `join_15`,
       }));
-      const joinNCostInMicrocredits = Number(await programManager.estimateExecutionFee({
+      const joinNCostInMicrocredits = BigInt(await programManager.estimateExecutionFee({
         programName: this.getBatchProgram(records[0].programName, ((records.length - 1) % 14)+1),
         functionName: finalJoinNFunction
       }));
-      const totalCostInMicrocredits = totalJoin15Ops * (join15CostInMicrocredits + 10000) + joinNCostInMicrocredits;
+      const totalCostInMicrocredits = BigInt(totalJoin15Ops) * (join15CostInMicrocredits + 10000n) + joinNCostInMicrocredits;
 
       // Fetch the list of available Aleo Credits records (if joining USDCx / USAD)
       const creditsRecords = (records[0].programName) === "credits.aleo" ? records : await this.autoJoinClient.aleoClient.fetchUnspentRecords(this.autoJoinClient.account, ["credits.aleo"], this.autoJoinClient.accountAddress);
@@ -64,7 +64,7 @@ export class BatchAutoJoinStrategy implements JoinStrategy {
         current = leftoverCreditsRecords;
       }
       // Sanity Check
-      if (Number(joinNFeeRecord.amount) !== joinNCostInMicrocredits) {
+      if (BigInt(joinNFeeRecord.amount!) !== joinNCostInMicrocredits) {
         throw Error("Error with fee calculations");
       }
 

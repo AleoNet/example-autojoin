@@ -43,7 +43,7 @@ export class AutoJoinClient {
     return await joinStrategy.joinRecords(records, feePrivate);
   }
 
-  async splitCreditsRecord(creditsRecord: AleoRecord, amountInMicrocredits: number): Promise<[AleoRecord, AleoRecord]>{
+  async splitCreditsRecord(creditsRecord: AleoRecord, amountInMicrocredits: bigint): Promise<[AleoRecord, AleoRecord]>{
     const programManager = await this.getProgramManager();
     const provingRequest = await programManager.provingRequest({
       programName: "credits.aleo",
@@ -82,12 +82,19 @@ export class AutoJoinClient {
     return [newRecord, change];
   }
 
-  async generateMasterFeeRecord(creditsRecords: AleoRecord[], totalCostInMicrocredits: number): Promise<[AleoRecord[],AleoRecord]> {
+  async generateMasterFeeRecord(creditsRecords: AleoRecord[], totalCostInMicrocredits: bigint): Promise<[AleoRecord[],AleoRecord]> {
     // Sort credits records in ascending order of value
-    creditsRecords.sort((r1, r2) => Number(r1.amount) - Number(r2.amount!));
+    creditsRecords.sort((r1, r2) => { 
+      const amount1 = BigInt(r1.amount!); 
+      const amount2 = BigInt(r2.amount!); 
+      if (amount1 < amount2) return -1; 
+      if (amount1 > amount2) return 1; 
+      return 0; 
+    });
+
     for (let i: number = 0; i < creditsRecords.length; i++) {
       // Find the first (smallest balance) credits record that is enough to cover the total cost of fees
-      if (Number(creditsRecords[i].amount) >= totalCostInMicrocredits){
+      if (BigInt(creditsRecords[i].amount!) >= totalCostInMicrocredits){
         const [newRecord, change] = await this.splitCreditsRecord(creditsRecords[i], totalCostInMicrocredits);
         creditsRecords.splice(i,1);
         creditsRecords.push(change);
@@ -98,7 +105,7 @@ export class AutoJoinClient {
     throw Error("No records with large enough balance to pay for gas fees.");
   }
 
-  async generateFeeRecords(creditsRecord: AleoRecord, numberOfRecordsNeeded: number, amountPerRecord: number): Promise<[AleoRecord[],AleoRecord]> {
+  async generateFeeRecords(creditsRecord: AleoRecord, numberOfRecordsNeeded: number, amountPerRecord: bigint): Promise<[AleoRecord[],AleoRecord]> {
     let leftovers: AleoRecord = creditsRecord;
     const feeRecords: AleoRecord[] = [];
 
