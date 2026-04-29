@@ -1,9 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import './App.css';
 import {AleoClient, type AleoRecord, type Account} from "./aleo";
-import {AutoJoinClient} from "./aleo/autojoin/autoJoinClient.ts";
-import {BasicAutoJoinStrategy} from "./aleo/autojoin/strategies/basicAutoJoinStrategy.ts";
-import {BatchAutoJoinStrategy} from "./aleo/autojoin/strategies/batchAutoJoinStrategy.ts";
+import {AutoJoinClient, BasicAutoJoinStrategy, BatchAutoJoinStrategy} from "./aleo/autojoin";
 
 const TOKEN_PROGRAMS = {
   'testnet': [
@@ -35,6 +33,7 @@ function App() {
   const [aleoClient, setAleoClient] = useState<AleoClient<'testnet' | 'mainnet'>>(testnetAleoClient);
   const [network, setNetwork] = useState<'testnet' | 'mainnet'>('testnet');
   const [joinStrategy, setJoinStrategy] = useState<joinStrategyName>("basic");
+  const [feePrivate, setFeePrivate] = useState<boolean>(false);
   const [aleoAutoJoin, setAutoJoinClient] = useState<AutoJoinClient | undefined>();
 
   const [privateKeyInput, setPrivateKeyInput] = useState(import.meta.env.VITE_DEFAULT_PKEY || '');
@@ -98,7 +97,7 @@ function App() {
   }
 
   function copyToClipboard(text: string) {
-    navigator.clipboard.writeText(text);
+    void navigator.clipboard.writeText(text);
   }
   
   async function handleLoadRecords() {
@@ -121,8 +120,8 @@ function App() {
     setError(null);
     setJoinLoading(true);
     try {
-      const newRecord = await aleoAutoJoin.joinRecords(records);
-      setRecords([newRecord]);
+      const newRecords = await aleoAutoJoin.joinRecords(records, feePrivate);
+      setRecords(newRecords);
     } catch (e: unknown) {
       if (e instanceof Error) {
         setError(`Join operation failed: ${e}`);
@@ -233,7 +232,7 @@ function App() {
             onClick={() => {
               setLoading(true);
               setJoinStrategy("basic");
-              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, BasicAutoJoinStrategy));
+              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, getJoinStrategyClass("basic")));
               setLoading(false);
             }}
           >
@@ -245,13 +244,35 @@ function App() {
             onClick={() => {
               setLoading(true);
               setJoinStrategy("batch");
-              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, BatchAutoJoinStrategy));
+              setAutoJoinClient(new AutoJoinClient(aleoClient, aleoAccount!, getJoinStrategyClass("batch")));
               setLoading(false);
             }}
           >
             Batch
           </button>
         </div>
+        <label className="field-label">Fee</label>
+        <div className="fee-toggle">
+          <button
+            type="button"
+            className={`strategy-btn${!feePrivate ? ' strategy-btn--active' : ''}`}
+            onClick={() => {
+              setFeePrivate(false);
+            }}
+          >
+            Public
+          </button>
+          <button
+            type="button"
+            className={`strategy-btn${feePrivate ? ' strategy-btn--active' : ''}`}
+            onClick={() => {
+              setFeePrivate(true);
+            }}
+          >
+            Private
+          </button>
+        </div>
+
         <div className="form-group">
           <label htmlFor="program-name" className="field-label">
             Program Name
@@ -280,10 +301,14 @@ function App() {
             <ul className="records-list">
               {records.map((record, i) => (
                 <li key={i} className="record-item">
+                  <span className="record-number-label">Record #{i+1}:</span>
+                  <span className="record-value"/>
                   <span className="record-label">Amount</span>
                   <span className="record-value">
-                    {record.amount === undefined ? "-" : (Number(record.amount) / 1e6).toFixed(6)}
+                    {record.amount === undefined ? "-" : (Number(BigInt(record.amount!) / BigInt(1e6))).toFixed(6)}
                   </span>
+                  <span className="record-label">Ciphertext</span>
+                  <span className="record-value">{record.cipherText.toString()}</span>
                   <span className="record-label">Tx ID</span>
                   <span className="record-value">{record.transactionId}</span>
                 </li>

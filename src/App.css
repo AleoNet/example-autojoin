@@ -192,6 +192,13 @@
   color: #fff;
 }
 
+.fee-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
 .records-list {
   list-style: none;
   padding: 0;
@@ -217,6 +224,14 @@
   font-weight: 500;
   color: var(--text);
   white-space: nowrap;
+}
+
+.record-number-label {
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  text-decoration: underline;
+  font-size: 14px;
 }
 
 .record-value {

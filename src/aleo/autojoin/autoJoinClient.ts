@@ -35,11 +35,85 @@ export class AutoJoinClient {
     return this.programManager;
   }
 
-  async joinRecords(records: AleoRecord[]): Promise<AleoRecord> {
+  async joinRecords(records: AleoRecord[], feePrivate: boolean): Promise<AleoRecord[]> {
     if (records.length === 0) throw new Error('No records found');
-    if (records.length === 1) return records[0];
+    if (records.length === 1) return [records[0]];
     const joinStrategy = new this.joinStrategyClass(this);
     AutoJoinClient.validateRecordsForJoining(records, joinStrategy);
-    return await joinStrategy.joinRecords(records);
+    return await joinStrategy.joinRecords(records, feePrivate);
+  }
+
+  async splitCreditsRecord(creditsRecord: AleoRecord, amountInMicrocredits: bigint): Promise<[AleoRecord, AleoRecord]>{
+    const programManager = await this.getProgramManager();
+    const provingRequest = await programManager.provingRequest({
+      programName: "credits.aleo",
+      functionName: 'split',
+      priorityFee: 0,
+      privateFee: false,
+      inputs: [
+        creditsRecord.plainText.toString(),
+        amountInMicrocredits.toString() + "u64"
+      ],
+      broadcast: true,
+    });
+    const {transaction, broadcast_result} = await this.aleoClient.submitProvingRequestWithRetries(provingRequest,3);
+    if (broadcast_result?.status !== "Accepted") throw new Error(`Broadcast status not accepted: ${JSON.stringify(broadcast_result)}`);
+    const transactionId = transaction?.id;
+    if (!transactionId) throw new Error(`Transaction invalid: ${transaction}`);
+
+    const firstOutput = transaction.execution?.transitions?.[0]?.outputs?.[0];
+    if (!firstOutput?.value) throw new Error('No output record 1 in split transaction');
+    const newRecord = this.aleoClient.recordCipherTextStringToAleoRecord(
+      firstOutput.value,
+      this.account,
+      "credits.aleo",
+      transaction.id.trim(),
+    );
+
+    const secondOutput = transaction.execution?.transitions?.[0]?.outputs?.[1];
+    if (!secondOutput?.value) throw new Error('No output record 2 in split transaction');
+    const change  = this.aleoClient.recordCipherTextStringToAleoRecord(
+      secondOutput.value,
+      this.account,
+      "credits.aleo",
+      transaction.id.trim(),
+    );
+    
+    return [newRecord, change];
+  }
+
+  async generateMasterFeeRecord(creditsRecords: AleoRecord[], totalCostInMicrocredits: bigint): Promise<[AleoRecord[],AleoRecord]> {
+    // Sort credits records in ascending order of value
+    creditsRecords.sort((r1, r2) => { 
+      const amount1 = BigInt(r1.amount!); 
+      const amount2 = BigInt(r2.amount!); 
+      if (amount1 < amount2) return -1; 
+      if (amount1 > amount2) return 1; 
+      return 0; 
+    });
+
+    for (let i: number = 0; i < creditsRecords.length; i++) {
+      // Find the first (smallest balance) credits record that is enough to cover the total cost of fees
+      if (BigInt(creditsRecords[i].amount!) >= totalCostInMicrocredits){
+        const [newRecord, change] = await this.splitCreditsRecord(creditsRecords[i], totalCostInMicrocredits);
+        creditsRecords.splice(i,1);
+        creditsRecords.push(change);
+        return [creditsRecords, newRecord];
+      }
+    }
+
+    throw Error("No records with large enough balance to pay for gas fees.");
+  }
+
+  async generateFeeRecords(creditsRecord: AleoRecord, numberOfRecordsNeeded: number, amountPerRecord: bigint): Promise<[AleoRecord[],AleoRecord]> {
+    let leftovers: AleoRecord = creditsRecord;
+    const feeRecords: AleoRecord[] = [];
+
+    for (let i: number = 0; i < numberOfRecordsNeeded; i++) {
+      const [newRecord, change] = await this.splitCreditsRecord(leftovers, amountPerRecord);
+      feeRecords.push(newRecord);
+      leftovers = change;
+    }
+    return [feeRecords,leftovers];
   }
 }

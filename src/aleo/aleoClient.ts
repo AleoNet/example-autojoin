@@ -1,26 +1,28 @@
 import {
   Account as TestnetAccount,
-  RecordScanner as TestnetRecordScanner,
-  ProgramManager as TestnetProgramManager,
   type FunctionKeyProvider as TestnetFunctionKeyProvider,
+  ProgramManager as TestnetProgramManager,
   type RecordCiphertext as TestnetRecordCiphertext,
   type RecordPlaintext as TestnetRecordPlaintext,
+  RecordScanner as TestnetRecordScanner,
   type Transaction as TestnetTransaction,
 } from '@provablehq/sdk/testnet.js';
 import {
   Account as MainnetAccount,
-  RecordScanner as MainnetRecordScanner,
-  ProgramManager as MainnetProgramManager,
+  type ConfirmedTransactionJSON,
   type FunctionKeyProvider as MainnetFunctionKeyProvider,
   type OwnedRecord,
+  ProgramManager as MainnetProgramManager,
   type ProvingRequest,
   type ProvingResponse,
   type RecordCiphertext as MainnetRecordCiphertext,
   type RecordPlaintext as MainnetRecordPlaintext,
-  type Transaction as MainnetTransaction, type ConfirmedTransactionJSON,
+  RecordScanner as MainnetRecordScanner,
+  type Transaction as MainnetTransaction,
 } from '@provablehq/sdk/mainnet.js';
 import {loadNetwork, type Networks} from "@provablehq/sdk/dynamic.js";
 import {AleoNetworkClient} from "@provablehq/sdk";
+
 export {AleoNetworkClient} from "@provablehq/sdk";
 export { type OwnedRecord, type ProvingRequest, type ProvingResponse } from '@provablehq/sdk/mainnet.js';
 
@@ -158,7 +160,12 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
       unspent: true,
       filter: { programs: programNames },
     });
-    return records.map(r => this.ownedRecordToAleoRecord(r, account));
+
+    // Only return Token (USAD/USDCx) or credits (ALEO) records, not Credentials or any other record type
+    return records
+      .filter(r => (r.record_name === "credits" || r.record_name === "Token"))
+      .map(r =>this.ownedRecordToAleoRecord(r, account))
+      .filter(r => r.amount!=="0");
   }
 
   ownedRecordToAleoRecord(ownedRecord: OwnedRecord, account: Account): AleoRecord {
@@ -219,6 +226,32 @@ export class AleoClient<NetworkKey extends AleoNetwork> {
       dpsPrivacy: true,
       jwtData: this.jwtData,
     });
+  }
+
+  /** Calls out to the delegated proving system to submit a request for proving, retrying a number of times if there's an error. **/
+  async submitProvingRequestWithRetries(provingRequest: ProvingRequest, retries: number, attempts: number = 0): Promise<ProvingResponse> {
+    try {
+      return await this.submitProvingRequest(provingRequest);
+    } catch (error) {
+      const totalAttempts = attempts + 1;
+      if (retries > 0) {
+        await new Promise(res => setTimeout(res, 5000 * totalAttempts));
+        console.log(`Retrying... (${retries} left)`);
+        return this.submitProvingRequestWithRetries(provingRequest, retries - 1, totalAttempts);
+      } else {
+        if (error instanceof Error) {
+          throw new Error(
+            `submitProvingRequestWithRetries failed after ${totalAttempts} attempt(s): ${error.message}`,
+            { cause: error }
+          );
+        } else {
+          throw new Error(
+            `submitProvingRequestWithRetries failed after ${totalAttempts} attempt(s): An unexpected error occurred`,
+            { cause: error }
+          );
+        }
+      }
+    }
   }
 
   async submitTransaction(transaction: Transaction, waitForConfirmation: boolean = false) {
