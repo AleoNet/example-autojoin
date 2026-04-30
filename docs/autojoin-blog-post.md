@@ -2,7 +2,7 @@
 
 ## Overview
 
-Aleo provides transaction privacy at the protocol level by encrypting account balances and transfers onchain. An account's balance is not exposed as a public value. Instead, the account's spendable funds are represented as a set of encrypted records, each holding a fixed amount of credits or tokens and decryptable only by the record's owner.
+Aleo provides transaction privacy at the protocol level by encrypting account balances and transfers onchain. An account's balance is not a single value. Rather, the account's spendable funds are represented as a set of encrypted records. Akin to the UTXO model, or bills of real world cash, each record holds a fixed amount of value.
 
 Because records are private and only spendable by their owner, the protocol cannot aggregate them on the user's behalf. Routine activity therefore tends to leave many small records in a wallet over time, a condition known as record fragmentation. A fragmented wallet may hold enough total balance to cover a given payment and still be unable to send that payment in a single transaction, because each transaction can consume only a limited number of records as inputs. The payment then has to be broken into several smaller transactions, each of which pays its own fee.
 
