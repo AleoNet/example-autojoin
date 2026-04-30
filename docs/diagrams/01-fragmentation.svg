@@ -1,19 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 360" font-family="'Aleo Sans', Aleo, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif">
   <style>
-    .heading { fill: #121212; font-size: 16px; font-weight: 600; }
-    .caption { fill: #121212; font-size: 14px; font-style: italic; opacity: 0.75; }
+    .heading { fill: #F5F5F5; font-size: 16px; font-weight: 600; }
+    .caption { fill: #F5F5F5; font-size: 14px; font-style: italic; opacity: 0.7; }
     .record-text { fill: #121212; font-size: 11px; font-weight: 500; }
     .record-text-large { fill: #121212; font-size: 16px; font-weight: 600; }
-    .wallet { fill: none; stroke: #121212; stroke-width: 1.5; }
+    .wallet { fill: none; stroke: #E3E3E3; stroke-width: 1.5; }
     .record { fill: #C4FFC2; }
-    .arrow { stroke: #121212; fill: #121212; }
-    @media (prefers-color-scheme: dark) {
-      .heading { fill: #F5F5F5; }
-      .caption { fill: #F5F5F5; opacity: 0.7; }
-      .wallet { stroke: #E3E3E3; }
-      .arrow { stroke: #E3E3E3; fill: #E3E3E3; }
-    }
+    .arrow { stroke: #E3E3E3; fill: #E3E3E3; }
   </style>
+
+  <rect width="880" height="360" fill="#121212"/>
 
   <text x="190" y="30" text-anchor="middle" class="heading">Fragmented</text>
   <text x="690" y="30" text-anchor="middle" class="heading">Consolidated</text>
