@@ -4,9 +4,9 @@
 
 Aleo provides transaction privacy at the protocol level by encrypting account balances and transfers onchain. Unlike fully public chains, an account's private balance is the sum of a set of encrypted records. Each record holds a fixed amount of value, akin to the UTXO model or bills of real world cash.
 
-Because records are private and only spendable by their owner, the protocol cannot aggregate them on the user's behalf. Routine activity therefore tends to leave many small records in a wallet over time, a condition known as record fragmentation. A fragmented wallet may hold enough total balance to cover a given payment and still be unable to send that payment in a single transaction, because each transaction can consume only a limited number of records as inputs. The payment then has to be broken into several smaller transactions, each of which pays its own fee.
+Routine activity tends to leave many small records in a wallet over time, a condition known as record fragmentation. A fragmented wallet may hold enough total balance to cover a given payment and still be unable to send that payment in a single transaction, because each transaction can consume only a limited number of records as inputs. The payment then has to be broken into several smaller transactions, each of which pays its own fee.
 
-Autojoin is an open-source library that handles this consolidation at the application layer. It combines a wallet's small records into a single record using as few transactions as possible, and supports both public and private fee modes. The source is available at the [autojoin repository](https://github.com/AleoNet/example-autojoin).
+Because records are private and only spendable by their owner, the protocol cannot aggregate them on the user's behalf. Therefore, wallet providers who wish to integrate Aleo must handle this record management and consolidation at the application layer.  This post will describe different strategies for managing records on Aleo, as well as the design considerations that should be taken into account.  The Aleo Network Foundation has provided an open-source repository containing the code in this post; it can found at the [AleoNet/example-autojoin](https://github.com/AleoNet/example-autojoin) repository on Github.
 
 ## Records And Fragmentation
 
