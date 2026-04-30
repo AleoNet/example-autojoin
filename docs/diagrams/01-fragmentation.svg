@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 360" font-family="'Aleo Sans', Aleo, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif">
+  <style>
+    .heading { fill: #121212; font-size: 16px; font-weight: 600; }
+    .caption { fill: #121212; font-size: 14px; font-style: italic; opacity: 0.75; }
+    .record-text { fill: #121212; font-size: 11px; font-weight: 500; }
+    .record-text-large { fill: #121212; font-size: 16px; font-weight: 600; }
+    .wallet { fill: none; stroke: #121212; stroke-width: 1.5; }
+    .record { fill: #C4FFC2; }
+    .arrow { stroke: #121212; fill: #121212; }
+    @media (prefers-color-scheme: dark) {
+      .heading { fill: #F5F5F5; }
+      .caption { fill: #F5F5F5; opacity: 0.7; }
+      .wallet { stroke: #E3E3E3; }
+      .arrow { stroke: #E3E3E3; fill: #E3E3E3; }
+    }
+  </style>
+
+  <text x="190" y="30" text-anchor="middle" class="heading">Fragmented</text>
+  <text x="690" y="30" text-anchor="middle" class="heading">Consolidated</text>
+
+  <rect x="40" y="50" width="300" height="240" rx="14" class="wallet"/>
+
+  <rect x="60"  y="70"  width="80"  height="22" rx="3" class="record"/>
+  <text x="100" y="86" text-anchor="middle" class="record-text">420 μALEO</text>
+
+  <rect x="150" y="72"  width="60"  height="22" rx="3" class="record"/>
+  <text x="180" y="88" text-anchor="middle" class="record-text">85 μALEO</text>
+
+  <rect x="220" y="68"  width="100" height="22" rx="3" class="record"/>
+  <text x="270" y="84" text-anchor="middle" class="record-text">1,200 μALEO</text>
+
+  <rect x="68"  y="105" width="70"  height="22" rx="3" class="record"/>
+  <text x="103" y="121" text-anchor="middle" class="record-text">310 μALEO</text>
+
+  <rect x="148" y="103" width="90"  height="22" rx="3" class="record"/>
+  <text x="193" y="119" text-anchor="middle" class="record-text">975 μALEO</text>
+
+  <rect x="248" y="106" width="70"  height="22" rx="3" class="record"/>
+  <text x="283" y="122" text-anchor="middle" class="record-text">240 μALEO</text>
+
+  <rect x="58"  y="140" width="110" height="22" rx="3" class="record"/>
+  <text x="113" y="156" text-anchor="middle" class="record-text">2,150 μALEO</text>
+
+  <rect x="178" y="142" width="60"  height="22" rx="3" class="record"/>
+  <text x="208" y="158" text-anchor="middle" class="record-text">95 μALEO</text>
+
+  <rect x="248" y="140" width="80"  height="22" rx="3" class="record"/>
+  <text x="288" y="156" text-anchor="middle" class="record-text">540 μALEO</text>
+
+  <rect x="62"  y="178" width="90"  height="22" rx="3" class="record"/>
+  <text x="107" y="194" text-anchor="middle" class="record-text">1,820 μALEO</text>
+
+  <rect x="160" y="180" width="70"  height="22" rx="3" class="record"/>
+  <text x="195" y="196" text-anchor="middle" class="record-text">155 μALEO</text>
+
+  <rect x="240" y="178" width="80"  height="22" rx="3" class="record"/>
+  <text x="280" y="194" text-anchor="middle" class="record-text">680 μALEO</text>
+
+  <rect x="80"  y="215" width="100" height="22" rx="3" class="record"/>
+  <text x="130" y="231" text-anchor="middle" class="record-text">3,000 μALEO</text>
+
+  <rect x="190" y="217" width="60"  height="22" rx="3" class="record"/>
+  <text x="220" y="233" text-anchor="middle" class="record-text">180 μALEO</text>
+
+  <rect x="260" y="215" width="60"  height="22" rx="3" class="record"/>
+  <text x="290" y="231" text-anchor="middle" class="record-text">160 μALEO</text>
+
+  <rect x="120" y="252" width="120" height="22" rx="3" class="record"/>
+  <text x="180" y="268" text-anchor="middle" class="record-text">450 μALEO</text>
+
+  <line x1="370" y1="170" x2="510" y2="170" class="arrow" stroke-width="2"/>
+  <polygon points="510,170 498,162 498,178" class="arrow"/>
+
+  <rect x="540" y="50" width="300" height="240" rx="14" class="wallet"/>
+
+  <rect x="580" y="155" width="220" height="36" rx="4" class="record"/>
+  <text x="690" y="178" text-anchor="middle" class="record-text-large">12,650 μALEO</text>
+</svg>

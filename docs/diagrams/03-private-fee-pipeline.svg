@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 620" font-family="'Aleo Sans', Aleo, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif">
+  <style>
+    .stage-label { fill: #121212; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; opacity: 0.7; }
+    .box-text-strong { fill: #121212; font-size: 14px; font-weight: 600; }
+    .amount-text { fill: #121212; font-size: 12px; font-weight: 400; }
+    .process-text { fill: #F5F5F5; font-size: 14px; font-weight: 600; letter-spacing: 0.5px; }
+    .side-note { fill: #121212; font-size: 12px; font-style: italic; opacity: 0.65; }
+    .footer-note { fill: #121212; font-size: 13px; font-style: italic; opacity: 0.75; }
+
+    .credit-record { fill: #C4FFC2; }
+    .fee-record { fill: #FFE092; }
+    .change-record { fill: #E3E3E3; }
+    .process { fill: #121212; }
+    .arrow { stroke: #121212; fill: #121212; stroke-width: 1.5; }
+
+    @media (prefers-color-scheme: dark) {
+      .stage-label { fill: #F5F5F5; opacity: 0.75; }
+      .side-note { fill: #F5F5F5; opacity: 0.7; }
+      .footer-note { fill: #F5F5F5; opacity: 0.8; }
+      .arrow { stroke: #E3E3E3; fill: #E3E3E3; }
+      .process { fill: #E3E3E3; }
+      .process-text { fill: #121212; }
+    }
+  </style>
+
+  <!-- ========== STAGE 1 ========== -->
+  <text x="60" y="40" class="stage-label">Stage 1 — find a large enough record</text>
+
+  <rect x="290" y="60" width="180" height="56" rx="6" class="credit-record"/>
+  <text x="380" y="84" text-anchor="middle" class="box-text-strong">credits record</text>
+  <text x="380" y="103" text-anchor="middle" class="amount-text">50,000 μALEO</text>
+
+  <line x1="380" y1="116" x2="380" y2="148" class="arrow"/>
+  <polygon points="380,156 372,144 388,144" class="arrow"/>
+
+  <rect x="330" y="158" width="100" height="40" rx="20" class="process"/>
+  <text x="380" y="183" text-anchor="middle" class="process-text">split</text>
+
+  <!-- ========== STAGE 2 ========== -->
+  <text x="60" y="232" class="stage-label">Stage 2 — carve out master fee record</text>
+
+  <line x1="380" y1="198" x2="380" y2="220" class="arrow"/>
+  <line x1="380" y1="220" x2="600" y2="220" class="arrow"/>
+  <line x1="380" y1="220" x2="380" y2="262" class="arrow"/>
+  <polygon points="380,270 372,258 388,258" class="arrow"/>
+  <line x1="600" y1="220" x2="600" y2="262" class="arrow"/>
+  <polygon points="600,270 592,258 608,258" class="arrow"/>
+
+  <rect x="290" y="270" width="180" height="56" rx="6" class="fee-record"/>
+  <text x="380" y="294" text-anchor="middle" class="box-text-strong">master fee record</text>
+  <text x="380" y="313" text-anchor="middle" class="amount-text">9,600 μALEO</text>
+
+  <rect x="510" y="270" width="180" height="56" rx="6" class="change-record"/>
+  <text x="600" y="294" text-anchor="middle" class="box-text-strong">change record</text>
+  <text x="600" y="313" text-anchor="middle" class="amount-text">40,400 μALEO</text>
+
+  <text x="600" y="346" text-anchor="middle" class="side-note">returned to wallet</text>
+
+  <line x1="380" y1="326" x2="380" y2="378" class="arrow"/>
+  <polygon points="380,386 372,374 388,374" class="arrow"/>
+
+  <!-- ========== STAGE 3 ========== -->
+  <text x="60" y="416" class="stage-label">Stage 3 — split into per-operation fee records</text>
+
+  <rect x="320" y="430" width="120" height="40" rx="20" class="process"/>
+  <text x="380" y="455" text-anchor="middle" class="process-text">split × N</text>
+
+  <line x1="380" y1="470" x2="380" y2="495" class="arrow"/>
+  <line x1="150" y1="495" x2="610" y2="495" class="arrow"/>
+
+  <line x1="150" y1="495" x2="150" y2="525" class="arrow"/>
+  <polygon points="150,533 142,521 158,521" class="arrow"/>
+
+  <line x1="380" y1="495" x2="380" y2="525" class="arrow"/>
+  <polygon points="380,533 372,521 388,521" class="arrow"/>
+
+  <line x1="610" y1="495" x2="610" y2="525" class="arrow"/>
+  <polygon points="610,533 602,521 618,521" class="arrow"/>
+
+  <rect x="60" y="535" width="180" height="64" rx="6" class="fee-record"/>
+  <text x="150" y="560" text-anchor="middle" class="box-text-strong">fee for join_15</text>
+  <text x="150" y="580" text-anchor="middle" class="amount-text">3,200 μALEO</text>
+
+  <rect x="290" y="535" width="180" height="64" rx="6" class="fee-record"/>
+  <text x="380" y="560" text-anchor="middle" class="box-text-strong">fee for join_15</text>
+  <text x="380" y="580" text-anchor="middle" class="amount-text">3,200 μALEO</text>
+
+  <rect x="520" y="535" width="180" height="64" rx="6" class="fee-record"/>
+  <text x="610" y="560" text-anchor="middle" class="box-text-strong">fee for join_2</text>
+  <text x="610" y="580" text-anchor="middle" class="amount-text">2,000 μALEO</text>
+
+</svg>
