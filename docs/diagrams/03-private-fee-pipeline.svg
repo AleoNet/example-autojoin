@@ -21,7 +21,7 @@
 
   <rect x="290" y="60" width="180" height="56" rx="6" class="credit-record"/>
   <text x="380" y="84" text-anchor="middle" class="box-text-strong">credits record</text>
-  <text x="380" y="103" text-anchor="middle" class="amount-text">50,000 μALEO</text>
+  <text x="380" y="103" text-anchor="middle" class="amount-text">70,000 μALEO</text>
 
   <line x1="380" y1="116" x2="380" y2="148" class="arrow"/>
   <polygon points="380,156 372,144 388,144" class="arrow"/>
@@ -41,11 +41,11 @@
 
   <rect x="290" y="270" width="180" height="56" rx="6" class="fee-record"/>
   <text x="380" y="294" text-anchor="middle" class="box-text-strong">master fee record</text>
-  <text x="380" y="313" text-anchor="middle" class="amount-text">9,600 μALEO</text>
+  <text x="380" y="313" text-anchor="middle" class="amount-text">28,400 μALEO</text>
 
   <rect x="510" y="270" width="180" height="56" rx="6" class="change-record"/>
   <text x="600" y="294" text-anchor="middle" class="box-text-strong">change record</text>
-  <text x="600" y="313" text-anchor="middle" class="amount-text">40,400 μALEO</text>
+  <text x="600" y="313" text-anchor="middle" class="amount-text">41,600 μALEO</text>
 
   <text x="600" y="346" text-anchor="middle" class="side-note">returned to wallet</text>
 

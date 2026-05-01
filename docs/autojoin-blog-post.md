@@ -6,7 +6,9 @@ Aleo provides transaction privacy at the protocol level by encrypting account ba
 
 Routine activity tends to leave many small records in a wallet over time, a condition known as record fragmentation. A fragmented wallet may hold enough total balance to cover a given payment and still be unable to send that payment in a single transaction, because each transaction can consume only a limited number of records as inputs. The payment then has to be broken into several smaller transactions, each of which pays its own fee.
 
-Because records are private and only spendable by their owner, the protocol cannot aggregate them on the user's behalf. Therefore, wallet providers who wish to integrate Aleo must handle this record management and consolidation at the application layer.  This post will describe different strategies for managing records on Aleo, as well as the design considerations that should be taken into account.  The Aleo Network Foundation has provided an open-source repository containing the code in this post; it can found at the [AleoNet/example-autojoin](https://github.com/AleoNet/example-autojoin) repository on Github.
+Because records are private and only spendable by their owner, the protocol cannot aggregate them on the user's behalf. Therefore, wallet providers who wish to integrate Aleo must handle this record management and consolidation at the application layer.  
+
+This post will describe different strategies for managing records on Aleo, as well as the design considerations that should be taken into account.  The Aleo Network Foundation has provided an open-source repository containing the code in this post; it can found at the [AleoNet/example-autojoin](https://github.com/AleoNet/example-autojoin) repository on Github.
 
 ## Records And Fragmentation
 
@@ -160,9 +162,39 @@ Once the total budget is known, the individual fee records can be generated in t
 
 ![Private fee preparation pipeline: split a credits record into a master fee record, then split that into per-operation fee records](diagrams/03-private-fee-pipeline.svg)
 
+
 ### Implicit Split Costs
 
-The `split` operation for Aleo Credits does not incur the standard onchain execution fee.  Rather, it has an implicit cost deducted directly from the record being split. The implicit cost is fixed by the protocol and is not represented as a separate fee record. A budget that accounts only for join fees and ignores the splits required to prepare them will under-fund the operation. Both quantities are deterministic, so they can be incorporated into the same up-front calculation.
+The `split` operation for Aleo Credits does not incur the standard onchain execution fee.  Rather, it has an implicit **10,000 μALEO** cost deducted directly from the record being split. The implicit cost is fixed by the protocol and is not represented as a separate fee record. A budget that accounts only for join fees and ignores the splits required to prepare them will under-fund the operation. Both quantities are deterministic, so they can be incorporated into the same up-front calculation.
+
+### Cost Breakdown
+
+| Function | Aleo Credits | USDCx | USAD |
+|---|---:|---:|---:|
+| `join` | 2,120 | 2,123 | 2,122 |
+| `join_2` | 2,872 | 2,878 | 2,876 |
+| `join_3` | 3,833 | 3,842 | 3,839 |
+| `join_4` | 4,794 | 4,806 | 4,802 |
+| `join_5` | 6,624 | 6,658 | 6,647 |
+| `join_6` | 9,020 | 9,069 | 9,053 |
+| `join_7` | 11,787 | 11,851 | 11,830 |
+| `join_8` | 14,923 | 15,006 | 14,978 |
+| `join_9` | 18,428 | 18,531 | 18,497 |
+| `join_10` | 22,306 | 22,433 | 22,391 |
+| `join_11` | 26,555 | 26,708 | 26,657 |
+| `join_12` | 31,170 | 31,350 | 31,290 |
+| `join_13` | 36,153 | 36,363 | 36,293 |
+| `join_14` | 41,506 | 41,748 | 41,668 |
+| `join_15` | 47,228 | 47,505 | 47,413 |
+| `join_16` | 53,320 | 53,634 | 53,529 |
+
+**Notes:**
+- All values are in μALEO.
+
+- The bare `join` (built into each base program) joins exactly two records and is cheaper than the wrapper `join_2` because the wrapper adds a transition hop. So if you only need to join two records, the bare join is the better call.
+
+- USDCx and USAD wrappers are slightly more expensive than the `credits.aleo` equivalents at every batch size — the token side has extra    import overhead (multisig core, freezelist, merkle tree) that shows up in the proof cost.                                                 
+- These are base execution fees only. They don't include a priority fee or the 10000 microcredit buffer the autojoin code adds when carving private fee records.      
 
 ## Example
 
