@@ -196,7 +196,7 @@ The `split` operation for Aleo Credits does not incur the standard onchain execu
 - USDCx and USAD wrappers are slightly more expensive than the `credits.aleo` equivalents at every batch size — the token side has extra    import overhead (multisig core, freezelist, merkle tree) that shows up in the proof cost.                                                 
 - These are base execution fees only. They don't include a priority fee or the 10000 microcredit buffer the autojoin code adds when carving private fee records.      
 
-## Example
+### Example
 
 The following sequence traces a private-fee batch autojoin over 30 records.
 
@@ -206,7 +206,7 @@ In the first round, the library partitions the 30 records into two batches of 15
 
 The full operation consolidates 30 records using 3 join transactions distributed over 2 rounds.
 
-## Summary
+## Conclusion
 
 Aleo's record model is a powerful privacy primitive that comes with operational tradeoffs. The most visible consequence is a UX gap. A user's wallet can display a balance that the user cannot actually send in a single transaction, because the records that sum to that balance exceed the per-transaction input cap. Sending the full balance instead requires multiple transactions, each paying its own fee and waiting on its own zero-knowledge proof. The user is left to either reason about records directly or hit confusing failures when the wallet's apparent balance does not behave like one.
 
