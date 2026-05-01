@@ -2,7 +2,7 @@
 
 ## Overview
 
-Aleo provides transaction privacy at the protocol level by encrypting account balances and transfers onchain. Unlike fully public chains, an account's private balance is the sum of a set of encrypted records. Each record holds a fixed amount of value, akin to the UTXO model or bills of real world cash.
+Aleo provides transaction privacy at the protocol level by encrypting account balances and transfers onchain. Unlike fully public chains, an account's private balance is the sum of a set of encrypted records. Each record holds a fixed amount of value, akin to a UTXO or bills of real world cash.
 
 Routine activity tends to leave many small records in a wallet over time, a condition known as record fragmentation. A fragmented wallet may hold enough total balance to cover a given payment and still be unable to send that payment in a single transaction, because each transaction can consume only a limited number of records as inputs. The payment then has to be broken into several smaller transactions, each of which pays its own fee.
 
@@ -200,7 +200,7 @@ The `split` operation for Aleo Credits does not incur the standard onchain execu
 
 The following sequence traces a private-fee batch autojoin over 30 records.
 
-The library first plans the join sequence. Since $⌊29/14⌋ = 2$, the consolidation requires two `join_15` calls and one final `join_2` (since $(29 \mod 14) + 1 = 2$). The library next computes the fee for each operation type and prepares three fee records via split. Two are sized for the `join_15` operations and one for the final `join_2`.
+The library first plans the join sequence. Since $⌊29/14⌋ = 2$, the consolidation requires two `join_15` calls and one final `join_2` ( $(29 \mod 14) + 1 = 2$). The library next computes the fee for each operation type and prepares three fee records via split. Two are sized for the `join_15` operations and one for the final `join_2`.
 
 In the first round, the library partitions the 30 records into two batches of 15 and executes both `join_15` calls concurrently, each paired with a dedicated fee record. The round produces 2 intermediate records. In the second round, the library combines the 2 intermediate records via `join_2` using the remaining fee record. The round produces 1 final record.
 
